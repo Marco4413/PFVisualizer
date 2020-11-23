@@ -28,7 +28,7 @@ const debugData = {
  * @returns {UMath.Vec2} A new Vector inside of the grid
  */
 function getRandomPos(offset = 0) {
-    return new UMath.Vec2(Math.round(Math.random() * (COLS + offset)), Math.round(Math.random() * (ROWS + offset)));
+    return new UMath.Vec2(Math.floor(Math.random() * (COLS + offset)), Math.floor(Math.random() * (ROWS + offset)));
 }
 
 /**
@@ -49,7 +49,7 @@ function addHollowRect(obstacles, x, y, w, h) {
             }
         }
         obstacles.get(relX + x).set(y, true);
-        obstacles.get(relX + x).set(y + h, true);
+        obstacles.get(relX + x).set(y + h - 1, true);
     }
 }
 
