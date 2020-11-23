@@ -1,7 +1,7 @@
 
-import { UMath } from "./wCanvas/wcanvas.js";
-import * as utils from "./utils.js";
-import { WorldMap, EMPTY_CELL } from "./WorldMap.js";
+import { UMath } from "../wCanvas/wcanvas.js";
+import * as utils from "../utils.js";
+import { WorldMap, EMPTY_CELL } from "../WorldMap.js";
 
 /**
  * Searches the cell that has the lowest fScore

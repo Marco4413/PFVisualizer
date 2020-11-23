@@ -1,8 +1,8 @@
 
 import { wCanvas, UMath } from "./wCanvas/wcanvas.js";
 import * as utils from "./utils.js";
-import { AStar } from "./AStar.js";
 import * as WorldMap from "./WorldMap.js";
+import { availableAlgorithms } from "./algorithms/allAlgorithms.js";
 
 const CELL_SIZE = 64;
 
@@ -10,6 +10,8 @@ let COLS = 0;
 let ROWS = 0;
 
 let WORLD_MAP;
+
+let currentAlgorithm = availableAlgorithms[0];
 
 /** @type {utils.DebugData} */
 const debugData = {
@@ -48,7 +50,7 @@ async function generatePath() {
         WORLD_MAP.putCell(WorldMap.WALL_CELL, pos.x, pos.y);
     }
 
-    const path = await AStar(
+    const path = await currentAlgorithm.search(
         start, goal,
         WORLD_MAP, debugData
     );
