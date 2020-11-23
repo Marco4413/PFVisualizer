@@ -9,7 +9,8 @@ const CELL_SIZE = 64;
 let COLS = 0;
 let ROWS = 0;
 
-let WORLD_MAP;
+/** @type {WorldMap.WorldMap} */
+const WORLD_MAP = new WorldMap.WorldMap(0, 0, 0, 0, false, false);
 
 let currentAlgorithm = availableAlgorithms[0];
 
@@ -36,7 +37,8 @@ async function generatePath() {
     if (lockPathGen) { return null; }
     lockPathGen = true;
 
-    WORLD_MAP = new WorldMap.WorldMap(0, 0, COLS, ROWS);
+    WORLD_MAP.clearMap();
+    WORLD_MAP.hollowRect(WorldMap.WALL_CELL, -1, -1, COLS + 2, ROWS + 2);
 
     const start = WORLD_MAP.pickRandomPos();
     const goal = WORLD_MAP.pickRandomPos();
@@ -87,17 +89,27 @@ function drawDebug(canvas) {
 function draw(canvas, deltaTime) {
     canvas.backgroundCSS("#000");
 
+    drawDebug(canvas);
+
     canvas.strokeCSS("#444");
     canvas.strokeWeigth(1);
     for (let col = 0; col <= COLS; col++) {
-        canvas.line(col * CELL_SIZE, 0, col * CELL_SIZE, canvas.canvas.height);
+        canvas.line(
+            WORLD_MAP.pos.x + col * CELL_SIZE,
+            0,
+            WORLD_MAP.pos.x + col * CELL_SIZE,
+            canvas.canvas.height
+        );
     }
 
     for (let row = 0; row <= ROWS; row++) {
-        canvas.line(0, row * CELL_SIZE, canvas.canvas.width, row * CELL_SIZE);
+        canvas.line(
+            0,
+            WORLD_MAP.pos.y + row * CELL_SIZE,
+            canvas.canvas.width,
+            WORLD_MAP.pos.y + row * CELL_SIZE
+        );
     }
-
-    drawDebug(canvas);
 
     if (!lockPathGen) {
         canvas.strokeCSS("#000");
@@ -152,6 +164,11 @@ window.addEventListener("load", () => {
 
             COLS = Math.floor(canvas.canvas.width / CELL_SIZE);
             ROWS = Math.floor(canvas.canvas.height / CELL_SIZE);
+
+            WORLD_MAP.pos.x = (window.innerWidth % CELL_SIZE) / 2;
+            WORLD_MAP.pos.y = (window.innerHeight % CELL_SIZE) / 2;
+            WORLD_MAP.size.x = COLS;
+            WORLD_MAP.size.y = ROWS;
         }
     });
 });
