@@ -69,7 +69,7 @@ async function generatePath() {
     addHollowRect(obstacles, -1, -1, COLS + 2, ROWS + 2);
 
     for (let i = 0; i < COLS * ROWS / 3; i++) {
-        const pos = getRandomPos(-2).add(1);
+        const pos = getRandomPos();
         if (start.x === pos.x && start.y === pos.y || goal.x === pos.x && goal.y === pos.y) {
             continue;
         }
