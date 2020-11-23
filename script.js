@@ -142,6 +142,17 @@ function draw(canvas, deltaTime) {
     }
 
     drawDebug(canvas);
+
+    if (!lockPathGen) {
+        canvas.strokeCSS("#000");
+        canvas.strokeWeigth(1);
+        canvas.fillCSS("#fff");
+        canvas.textSize(canvas.canvas.height / 20);
+        canvas.text(
+            "Press R to generate a new path", canvas.canvas.width / 2, canvas.canvas.height / 2,
+            { "horizontalAlignment": "center", "verticalAlignment": "center", "noStroke": false }
+        );
+    }
 }
 
 window.addEventListener("keydown", ev => {
