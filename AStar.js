@@ -1,6 +1,7 @@
 
 import { UMath } from "./wCanvas/wcanvas.js";
 import * as utils from "./utils.js";
+import { WorldMap, EMPTY_CELL } from "./WorldMap.js";
 
 /**
  * Searches the cell that has the lowest fScore
@@ -64,16 +65,15 @@ async function recostructPath(cameFrom, node, debugData = {}) {
  * The AStar search algorithm (source: https://en.wikipedia.org/wiki/A*_search_algorithm)
  * @param {UMath.Vec2} start - The starting node
  * @param {UMath.Vec2} goal - The goal
- * @param {utils.Obstacles} obstacles - All obstacles
+ * @param {WorldMap} worldMap - The World to search in
  * @param {utils.DebugData} debugData - Data for Debugging
  * @returns {Array<UMath.Vec2>} The path from start to goal
  */
-export async function AStar(start, goal, obstacles = new Map(), debugData = {}) {
+export async function AStar(start, goal, worldMap, debugData = {}) {
     // DEBUG CODE
     if (debugData.nodes) {
         debugData.nodes = [];
 
-        debugData.obstacles = utils.obstaclesToNodePairArray(obstacles, debugData.colors.obstacles);
         debugData.start = [ start, debugData.colors.start ];
         debugData.goal = [ goal , debugData.colors.goal ];
     }
@@ -117,7 +117,7 @@ export async function AStar(start, goal, obstacles = new Map(), debugData = {}) 
             UMath.Vec2.add(current, { x:  0, y: -1 })
         ].forEach(
             neighbour => {
-                if (!utils.isBlocked(obstacles, neighbour.x, neighbour.y)) {
+                if (worldMap.getCell(neighbour.x, neighbour.y) === EMPTY_CELL) {
                     neighbours.push(neighbour);
                 }
             }

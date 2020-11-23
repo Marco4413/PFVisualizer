@@ -2,11 +2,14 @@
 import { wCanvas, UMath } from "./wCanvas/wcanvas.js";
 import * as utils from "./utils.js";
 import { AStar } from "./AStar.js";
+import * as WorldMap from "./WorldMap.js";
 
 const CELL_SIZE = 64;
 
 let COLS = 0;
 let ROWS = 0;
+
+let WORLD_MAP;
 
 /** @type {utils.DebugData} */
 const debugData = {
@@ -16,89 +19,42 @@ const debugData = {
         "goal": "#ff0",
         "calculating": "#00f",
         "calculated": "#777",
-        "path": "#0f0",
-        "obstacles": "#fff"
+        "path": "#0f0"
     },
     "delay": 25
 };
 
-/**
- * Generates a new Vector inside of the grid
- * @param {Number} offset - Width and height offset
- * @returns {UMath.Vec2} A new Vector inside of the grid
- */
-function getRandomPos(offset = 0) {
-    return new UMath.Vec2(Math.floor(Math.random() * (COLS + offset)), Math.floor(Math.random() * (ROWS + offset)));
-}
-
-/**
- * Creates an hollow rectangle of obstacles
- * @param {utils.Obstacles} obstacles - The obstacles map
- * @param {Number} x - The x pos at which to draw the rectangle
- * @param {Number} y - The y pos at which to draw the rectangle
- * @param {Number} w - The width of the rectangle
- * @param {Number} h - The height of the rectangle
- */
-function addHollowRect(obstacles, x, y, w, h) {
-    for (let relX = 0; relX < w; relX++) {
-        if (!obstacles.has(relX + x)) { obstacles.set(relX + x, new Map()); }
-
-        if (relX === 0 || relX === w - 1) {
-            for (let relY = 0; relY < h; relY++) {
-                obstacles.get(relX + x).set(relY + y, true);
-            }
-        }
-        obstacles.get(relX + x).set(y, true);
-        obstacles.get(relX + x).set(y + h - 1, true);
-    }
-}
-
 // Used to lock path gen when one is already being generated
 let lockPathGen = false;
 /**
- * Generates a starting point, an end point, random obstacles and calculates the path from start to end
+ * Generates a starting point, an end point, a WorldMap with random walls and calculates the path from start to end
  * @returns {Array<UMath.Vec2>} The path to the goal
  */
 async function generatePath() {
     if (lockPathGen) { return null; }
     lockPathGen = true;
 
-    const start = getRandomPos();
-    const goal = getRandomPos();
+    WORLD_MAP = new WorldMap.WorldMap(0, 0, COLS, ROWS);
 
-    /**
-     * @type {utils.Obstacles}
-     */
-    const obstacles = new Map();
-    addHollowRect(obstacles, -1, -1, COLS + 2, ROWS + 2);
+    const start = WORLD_MAP.pickRandomPos();
+    const goal = WORLD_MAP.pickRandomPos();
 
-    for (let i = 0; i < COLS * ROWS / 3; i++) {
-        const pos = getRandomPos();
+    for (let i = 0; i < WORLD_MAP.size.x * WORLD_MAP.size.y / 3; i++) {
+        const pos = WORLD_MAP.pickRandomPos();
         if (start.x === pos.x && start.y === pos.y || goal.x === pos.x && goal.y === pos.y) {
             continue;
         }
 
-        if (!obstacles.has(pos.x)) { obstacles.set(pos.x, new Map()); }
-        obstacles.get(pos.x).set(pos.y, true);
+        WORLD_MAP.putCell(WorldMap.WALL_CELL, pos.x, pos.y);
     }
 
     const path = await AStar(
         start, goal,
-        obstacles, debugData
+        WORLD_MAP, debugData
     );
 
     lockPathGen = false;
     return path;
-}
-
-/**
- * Draws a NodePair to the canvas
- * @param {wCanvas} canvas - The canvas to drawn on
- * @param {utils.NodePair} nodePair - The NodePair to draw
- */
-function drawNode(canvas, nodePair) {
-    canvas.fillCSS(nodePair[1]);
-    canvas.rect(nodePair[0].x * CELL_SIZE, nodePair[0].y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
 }
 
 /**
@@ -108,18 +64,16 @@ function drawNode(canvas, nodePair) {
 function drawDebug(canvas) {
 
     for (let i = 0; i < debugData.nodes.length; i++) {
-        drawNode(canvas, debugData.nodes[i]);
+        utils.drawNodePair(canvas, debugData.nodes[i], WORLD_MAP.pos.x, WORLD_MAP.pos.y, CELL_SIZE);
     }
     
     if (debugData.start && debugData.goal) {
-        drawNode(canvas, debugData.start);
-        drawNode(canvas, debugData.goal);
+        utils.drawNodePair(canvas, debugData.start, WORLD_MAP.pos.x, WORLD_MAP.pos.y, CELL_SIZE);
+        utils.drawNodePair(canvas, debugData.goal, WORLD_MAP.pos.x, WORLD_MAP.pos.y, CELL_SIZE);
     }
 
-    if (debugData.obstacles) {
-        debugData.obstacles.forEach(
-            nodePair => drawNode(canvas, nodePair)
-        );
+    if (WORLD_MAP) {
+        WORLD_MAP.draw(canvas, CELL_SIZE);
     }
 
 }
