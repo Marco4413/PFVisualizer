@@ -6,12 +6,12 @@ It was made by using my own library to make canvas interactions easier! You can 
 ## What do the colours mean?
 
 There are 6 different colours:
- - **RED** -> start (The starting point)
- - **YELLOW** -> goal (The end point)
- - **BLUE** -> calculating (The cell that is being calculated)
- - **GRAY** -> searched (Already searched cells)
- - **GREEN** -> path (The path to the end)
- - **WHITE** -> obstacles (Walls)
+ - **RED** -> Start (The starting point)
+ - **YELLOW** -> Goal (The end point)
+ - **BLUE** -> Calculating (The cell that is being calculated)
+ - **GRAY** -> Calculated (Already calculated cells)
+ - **GREEN** -> Path (The path to the end)
+ - **WHITE** -> Obstacles (Walls)
 
 ## How do I generate a new path to calculate?
 
