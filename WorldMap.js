@@ -42,17 +42,44 @@ export class WorldMap {
             nodePair => drawNodePair(canvas, nodePair, this.pos.x, this.pos.y, scale)
         );
     }
+
+    /**
+     * Clears the map
+     */
+    clearMap() {
+        this.map = new Map();
+    }
+
+    /**
+     * Creates an hollow rectangle of the specified cell on the map
+     * @param {String} cell - The cell to fill the rectangle with
+     * @param {Number} x - The x pos to draw the rectangle at
+     * @param {Number} y - The y pos to draw the rectangle at
+     * @param {Number} w - The width of the rectangle
+     * @param {Number} h - The height of the rectangle
+     */
+    hollowRect(cell, x, y, w, h) {
+        for (let relX = 0; relX < w; relX++) {
+            if (relX === 0 || relX === w - 1) {
+                for (let relY = 0; relY < h; relY++) {
+                    this.putCell(cell, x + relX, y + relY);
+                }
+            } else {
+                this.putCell(cell, x + relX, y);
+                this.putCell(cell, x + relX, y + h - 1);
+            }
+        }
+    }
     
     /**
      * Converts this.map to an Array of NodePairs
-     * @param {Boolean} ignoreEmptyCells - Whether or not to include empty cells on the returned array
+     * @param {Boolean} ignoreEmptyCells - Whether or not to include explicitly set empty cells on the returned array
      * @returns {Array<NodePair>} - An array of NodePairs to be drawn
      */
     mapToNodePairArray(ignoreEmptyCells = true) {
         const mapArray = [];
-        for (let x = this.showBounds ? -1 : 0; x < this.size.x + (this.showBounds ? 1 : 0); x++) {
-            for (let y = this.showBounds ? -1 : 0; y < this.size.y + (this.showBounds ? 1 : 0); y++) {
-                const cell = this.getCell(x, y);
+        for (const [x, col] of this.map) {
+            for (const [y, cell] of col) {
                 if (!ignoreEmptyCells || cell !== EMPTY_CELL) {
                     mapArray.push([
                         new UMath.Vec2(x, y), cell
