@@ -11,9 +11,38 @@
             margin: 0px;
             overflow: hidden;
         }
+
+        .hidden {
+            display: none;
+        }
+
+        .settingsPanel {
+            position: absolute;
+            width: 20%;
+            min-height: 3%;
+            background-color: transparent;
+        }
+
+        #algoSelect {
+            color: white;
+            background-color: black;
+            border-color: gainsboro;
+            width: 100%;
+            height: 100%;
+            font-size: 100%;
+            border-radius: 5px;
+            border-width: 2px;
+        }
+
+        select:focus {
+            outline: none;
+        }
     </style>
 </head>
 <body>
-    
+    <div class="settingsPanel, hidden">
+        <select id="algoSelect" onchange="changeAlgorithm(this)">
+        </select>
+    </div>
 </body>
 </html>

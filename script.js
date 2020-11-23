@@ -111,11 +111,39 @@ function draw(canvas, deltaTime) {
     }
 }
 
+/**
+ * Changes the current algorithm based on a select HTML Element
+ * @param {HTMLSelectElement} element - The select HTML Element to take info from
+ */
+window.changeAlgorithm = (element) => {
+    console.log(`Selected Algorithm: ${element.value}`);
+    for (let i = 0; i < availableAlgorithms.length; i++) {
+        if (availableAlgorithms[i].longName === element.value) {
+            console.log(`Chosen Algorithm was found at index ${i}`);
+            currentAlgorithm = availableAlgorithms[i];
+            return;
+        }
+    }
+    console.log(`No Algorithm was found for ${element.value}`);
+}
+
 window.addEventListener("keydown", ev => {
     if (ev.key === "r") { generatePath(); }
 });
 
 window.addEventListener("load", () => {
+    /** @type {HTMLSelectElement} */
+    const algorithmSelect = document.getElementById("algoSelect");
+    availableAlgorithms.forEach(
+        algo => {
+            const option = document.createElement("option");
+            option.value = algo.longName;
+            option.text = `${algo.longName} (${algo.shortName})`;
+            algorithmSelect.appendChild(option);
+        }
+    );
+    window.changeAlgorithm(algorithmSelect);
+
     new wCanvas({
         "onDraw": draw,
         "onResize": (canvas) => {
