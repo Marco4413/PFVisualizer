@@ -55,6 +55,10 @@ function addHollowRect(obstacles, x, y, w, h) {
 
 // Used to lock path gen when one is already being generated
 let lockPathGen = false;
+/**
+ * Generates a starting point, an end point, random obstacles and calculates the path from start to end
+ * @returns {Array<UMath.Vec2>} The path to the goal
+ */
 async function generatePath() {
     if (lockPathGen) { return null; }
     lockPathGen = true;
