@@ -1,7 +1,7 @@
 
 import { UMath } from "../wCanvas/wcanvas.js";
 import * as utils from "../utils.js";
-import { WorldMap, EMPTY_CELL } from "../WorldMap.js";
+import { WorldMap, CELL_TYPES } from "../WorldMap.js";
 
 /**
  * Searches the cell that has the lowest fScore
@@ -29,33 +29,27 @@ function lowestFScore(set, fScore) {
  * Returns the path from the specified node to the start
  * @param {Map<String, String>} cameFrom - The Map which contains all previous pos
  * @param {UMath.Vec2} node - The node to generate the path for
- * @param {utils.DebugData} debugData - Debug Data for Debugging
+ * @param {WorldMap} worldMap - The World the path is in
+ * @param {Number} actionDelay - Delay between actions
  * @returns {Array<UMath.Vec2>} The path from node to the start
  */
-async function recostructPath(cameFrom, node, debugData = {}) {
+async function recostructPath(cameFrom, node, worldMap, actionDelay) {
     const path = [ node ];
-    
-    // DEBUG CODE
-    if (debugData.nodes) {
-        debugData.nodes.push([ node, debugData.colors.path ]);
-    }
-    // DEBUG CODE
+
+    worldMap.putCell(CELL_TYPES.PATH, node.x, node.y)
 
     let current = node.toString();
     while (cameFrom.get(current) !== undefined) {
         current = cameFrom.get(current);
+        const currentVec = UMath.Vec2.fromString(current);
         
-        // DEBUG CODE
-        if (debugData.delay) {
-            await utils.sleep(debugData.delay);
+        if (actionDelay) {
+            await utils.sleep(actionDelay);
         }
 
-        if (debugData.nodes) {
-            debugData.nodes.push([ UMath.Vec2.fromString(current), debugData.colors.path ]);
-        }
-        // DEBUG CODE
+        worldMap.putCell(CELL_TYPES.PATH, currentVec.x, currentVec.y)
         
-        path.unshift(UMath.Vec2.fromString(current));
+        path.unshift(currentVec);
     }
 
     return path;
@@ -66,18 +60,13 @@ async function recostructPath(cameFrom, node, debugData = {}) {
  * @param {UMath.Vec2} start - The starting node
  * @param {UMath.Vec2} goal - The goal
  * @param {WorldMap} worldMap - The World to search in
- * @param {utils.DebugData} debugData - Data for Debugging
+ * @param {Number} actionDelay - Delay between actions
  * @returns {Array<UMath.Vec2>} The path from start to goal
  */
-export async function AStar(start, goal, worldMap, debugData = {}) {
-    // DEBUG CODE
-    if (debugData.nodes) {
-        debugData.nodes = [];
+export async function AStar(start, goal, worldMap, actionDelay) {
 
-        debugData.start = [ start, debugData.colors.start ];
-        debugData.goal = [ goal , debugData.colors.goal ];
-    }
-    // DEBUG CODE
+    worldMap.putCell(CELL_TYPES.START, start.x, start.y);
+    worldMap.putCell(CELL_TYPES.GOAL, goal.x, goal.y);
 
     const openSet = [ start ];
 
@@ -104,7 +93,7 @@ export async function AStar(start, goal, worldMap, debugData = {}) {
         if (gScore.get(currentStr) === undefined) { gScore.set(currentStr, Number.POSITIVE_INFINITY); }
 
         if (current.x === goal.x && current.y === goal.y) {
-            return await recostructPath(cameFrom, current, debugData);
+            return await recostructPath(cameFrom, current, worldMap, actionDelay);
         }
 
         openSet.splice(currentIndex, 1);
@@ -117,7 +106,7 @@ export async function AStar(start, goal, worldMap, debugData = {}) {
             UMath.Vec2.add(current, { x:  0, y: -1 })
         ].forEach(
             neighbour => {
-                if (worldMap.getCell(neighbour.x, neighbour.y) === EMPTY_CELL) {
+                if (!worldMap.isCellSolid(neighbour.x, neighbour.y)) {
                     neighbours.push(neighbour);
                 }
             }
@@ -128,18 +117,13 @@ export async function AStar(start, goal, worldMap, debugData = {}) {
             const neighbour = neighbours[i];
             const neighbourStr = neighbour.toString();
 
-            { // DEBUG CODE
-                const thisDebugNode = [ neighbour, debugData.colors.calculating ];
-                if (debugData.nodes) {
-                    debugData.nodes.push(thisDebugNode);
-                }
-
-                if (debugData.delay) {
-                    await utils.sleep(debugData.delay);
-                }
-
-                thisDebugNode[1] = debugData.colors.calculated;
-            } // DEBUG CODE
+            worldMap.putCell(CELL_TYPES.CALCULATING, neighbour.x, neighbour.y);
+            
+            if (actionDelay) {
+                await utils.sleep(actionDelay);
+            }
+                
+            worldMap.putCell(CELL_TYPES.CALCULATED, neighbour.x, neighbour.y);
             
             if (gScore.get(neighbourStr) === undefined) { gScore.set(neighbourStr, Number.POSITIVE_INFINITY); }
 

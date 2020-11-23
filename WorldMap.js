@@ -2,8 +2,29 @@
 import { wCanvas, UMath } from "./wCanvas/wcanvas.js";
 import { drawNodePair } from "./utils.js";
 
-export const WALL_CELL = "#fff";
-export const EMPTY_CELL = "#0000";
+export const CELL_TYPES = {
+    "WALL": "#fff",
+    "EMPTY": "#0000",
+    "START": "#f00",
+    "GOAL": "#ff0",
+    "CALCULATING": "#00f",
+    "CALCULATED": "#777",
+    "PATH": "#0f0"
+};
+
+/**
+ * An Object containing all cell types that are solid
+ */
+export const SOLID_CELL_TYPES = { }
+SOLID_CELL_TYPES[CELL_TYPES.WALL] = true;
+
+/**
+ * An Object containing all cell types that are permanent and can't be changed
+ */
+export const PERMANENT_CELL_TYPES = { }
+PERMANENT_CELL_TYPES[CELL_TYPES.START] = true;
+PERMANENT_CELL_TYPES[CELL_TYPES.GOAL] = true;
+PERMANENT_CELL_TYPES[CELL_TYPES.WALL] = true;
 
 /** 
  * @typedef {[UMath.Vec2, String]} NodePair - A (Vec2, Color) tuple
@@ -80,7 +101,7 @@ export class WorldMap {
         const mapArray = [];
         for (const [x, col] of this.map) {
             for (const [y, cell] of col) {
-                if (!ignoreEmptyCells || cell !== EMPTY_CELL) {
+                if (!ignoreEmptyCells || cell !== CELL_TYPES.EMPTY) {
                     mapArray.push([
                         new UMath.Vec2(x, y), cell
                     ]);
@@ -105,7 +126,10 @@ export class WorldMap {
      * @param {Number} y - The y coord of the new cell
      * @returns {String} The added cell
      */
-    putCell(cell = WALL_CELL, x, y) {
+    putCell(cell = CELL_TYPES.WALL, x, y) {
+        const selectedCell = this.getCell(x, y);
+        if (PERMANENT_CELL_TYPES[selectedCell]) { return selectedCell; }
+
         if (!this.map.has(x)) { this.map.set(x, new Map()); }
         this.map.get(x).set(y, cell);
         return cell;
@@ -118,7 +142,7 @@ export class WorldMap {
      * @returns {String} The cell at the specified point
      */
     getCell(x, y) {
-        if (this.hasBoundary && (x < 0 || x >= this.size.x || y < 0 || y >= this.size.y)) { return WALL_CELL; }
+        if (this.hasBoundary && (x < 0 || x >= this.size.x || y < 0 || y >= this.size.y)) { return CELL_TYPES.WALL; }
 
         if (this.map.has(x)) {
             const col = this.map.get(x);
@@ -127,7 +151,7 @@ export class WorldMap {
             }
         }
 
-        return EMPTY_CELL;
+        return CELL_TYPES.EMPTY;
     }
 
     /**
@@ -137,8 +161,18 @@ export class WorldMap {
      * @param {Number} y - The y pos of the cell to check
      * @returns {Boolean} Whether or not the cell is of the specified type
      */
-    isCellType(cell = WALL_CELL, x, y) {
+    isCellType(cell = CELL_TYPES.WALL, x, y) {
         return this.getCell(x, y) === cell;
+    }
+
+    /**
+     * Checks if a cell is solid
+     * @param {Number} x - The x pos of the cell to check
+     * @param {Number} y - The y pos of the cell to check
+     * @returns {Boolean} Whether or not the cell is solid
+     */
+    isCellSolid(x, y) {
+        return SOLID_CELL_TYPES[this.getCell(x, y)] ? true : false;
     }
 
 }

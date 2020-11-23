@@ -9,23 +9,12 @@ const CELL_SIZE = 64;
 let COLS = 0;
 let ROWS = 0;
 
+const ACTION_TIME = 25;
+
 /** @type {WorldMap.WorldMap} */
 const WORLD_MAP = new WorldMap.WorldMap(0, 0, 0, 0, false, false);
 
 let currentAlgorithm = availableAlgorithms[0];
-
-/** @type {utils.DebugData} */
-const debugData = {
-    "nodes": [],
-    "colors": {
-        "start": "#f00",
-        "goal": "#ff0",
-        "calculating": "#00f",
-        "calculated": "#777",
-        "path": "#0f0"
-    },
-    "delay": 25
-};
 
 // Used to lock path gen when one is already being generated
 let lockPathGen = false;
@@ -38,7 +27,7 @@ async function generatePath() {
     lockPathGen = true;
 
     WORLD_MAP.clearMap();
-    WORLD_MAP.hollowRect(WorldMap.WALL_CELL, -1, -1, COLS + 2, ROWS + 2);
+    WORLD_MAP.hollowRect(WorldMap.CELL_TYPES.WALL, -1, -1, COLS + 2, ROWS + 2);
 
     const start = WORLD_MAP.pickRandomPos();
     const goal = WORLD_MAP.pickRandomPos();
@@ -49,37 +38,16 @@ async function generatePath() {
             continue;
         }
 
-        WORLD_MAP.putCell(WorldMap.WALL_CELL, pos.x, pos.y);
+        WORLD_MAP.putCell(WorldMap.CELL_TYPES.WALL, pos.x, pos.y);
     }
 
     const path = await currentAlgorithm.search(
         start, goal,
-        WORLD_MAP, debugData
+        WORLD_MAP, ACTION_TIME
     );
 
     lockPathGen = false;
     return path;
-}
-
-/**
- * Draws Debug Data to the canvas
- * @param {wCanvas} canvas - The canvas to draw the data on
- */
-function drawDebug(canvas) {
-
-    for (let i = 0; i < debugData.nodes.length; i++) {
-        utils.drawNodePair(canvas, debugData.nodes[i], WORLD_MAP.pos.x, WORLD_MAP.pos.y, CELL_SIZE);
-    }
-    
-    if (debugData.start && debugData.goal) {
-        utils.drawNodePair(canvas, debugData.start, WORLD_MAP.pos.x, WORLD_MAP.pos.y, CELL_SIZE);
-        utils.drawNodePair(canvas, debugData.goal, WORLD_MAP.pos.x, WORLD_MAP.pos.y, CELL_SIZE);
-    }
-
-    if (WORLD_MAP) {
-        WORLD_MAP.draw(canvas, CELL_SIZE);
-    }
-
 }
 
 /**
@@ -89,7 +57,9 @@ function drawDebug(canvas) {
 function draw(canvas, deltaTime) {
     canvas.backgroundCSS("#000");
 
-    drawDebug(canvas);
+    if (WORLD_MAP) {
+        WORLD_MAP.draw(canvas, CELL_SIZE);
+    }
 
     canvas.strokeCSS("#444");
     canvas.strokeWeigth(1);
