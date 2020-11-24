@@ -3,21 +3,27 @@ import { wCanvas, UMath } from "./wCanvas/wcanvas.js";
 import * as WorldMap from "./WorldMap.js";
 import { availableAlgorithms } from "./algorithms/allAlgorithms.js";
 
-const KEY_BINDINGS = {
-    "restart"          : "R",
-    "toggleAlgoSelect" : "H"
-};
 
-let SCALE = 64;
+// SETTINGS
+const KEY_BINDINGS = {
+    "restart"             : "R",
+    "toggleSettings"      : "H",
+    "toggleGrid"          : "G",
+    "toggleRestartMessage": "U"
+};
 
 const MIN_WORLD_SIZE = 8;
 const MAX_WORLD_SIZE = 400;
+// END SETTINGS
 
-const ACTION_TIME = 25;
+let actionTime = 25;
+let gridEnabled = true;
+let restartMessage = true;
 
 /** @type {WorldMap.WorldMap} */
 const WORLD_MAP = new WorldMap.WorldMap(0, 0, 30, 15, true, true);
 
+let SCALE = 64;
 let currentAlgorithm = availableAlgorithms[0];
 
 // Used to lock path gen when one is already being generated
@@ -46,7 +52,7 @@ async function generatePath() {
 
     const path = await currentAlgorithm.search(
         start, goal,
-        WORLD_MAP, ACTION_TIME
+        WORLD_MAP, actionTime
     );
 
     lockPathGen = false;
@@ -94,14 +100,16 @@ function draw(canvas, deltaTime) {
         WORLD_MAP.draw(canvas, SCALE);
     }
 
-    drawGrid(
-        canvas,
-        WORLD_MAP.pos.x % SCALE, WORLD_MAP.pos.y % SCALE,
-        Math.floor(canvas.canvas.width / SCALE), Math.floor(canvas.canvas.height / SCALE),
-        SCALE
-    );
+    if (gridEnabled) {
+        drawGrid(
+            canvas,
+            WORLD_MAP.pos.x % SCALE, WORLD_MAP.pos.y % SCALE,
+            Math.floor(canvas.canvas.width / SCALE), Math.floor(canvas.canvas.height / SCALE),
+            SCALE
+        );
+    }
 
-    if (!lockPathGen) {
+    if (!lockPathGen && restartMessage) {
         const textSize = Math.min(canvas.canvas.width, canvas.canvas.height) / 20;
         canvas.strokeCSS("#000");
         canvas.strokeWeigth(textSize / 55);
@@ -162,9 +170,17 @@ window.addEventListener("keydown", ev => {
             generatePath();
             break;
         }
-        case KEY_BINDINGS.toggleAlgoSelect: {
+        case KEY_BINDINGS.toggleSettings: {
             const settingsPanel = document.getElementById("SP");
             settingsPanel.classList.toggle("hidden");
+            break;
+        }
+        case KEY_BINDINGS.toggleGrid: {
+            gridEnabled = !gridEnabled;
+            break;
+        }
+        case KEY_BINDINGS.toggleRestartMessage: {
+            restartMessage = !restartMessage;
             break;
         }
     }
