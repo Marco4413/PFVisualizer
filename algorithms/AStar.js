@@ -56,14 +56,40 @@ async function recostructPath(cameFrom, node, worldMap, actionDelay) {
 }
 
 /**
+ * Estimates the cost to reach goal from node
+ * @param {UMath.Vec2} node - The node to start on
+ * @param {UMath.Vec2} goal - The end node
+ * @returns {Number} The cost to reah the goal
+ */
+function heuristic(node, goal) {
+    return node.distSq(goal);
+}
+
+/**
+ * Calculates the cost to go from current to next
+ * @param {UMath.Vec2} current - The node we're currently on
+ * @param {UMath.Vec2} next - The node we want to go to
+ * @param {UMath.Vec2} start - The starting node
+ * @param {UMath.Vec2} goal - The ending node
+ * @returns {Number} The cost to reach next from current
+ */
+function edgeWeigth(current, next, start, goal) {
+    const distToNext = current.distSq(next);
+    // If we're going away from the goal we want to go ham on the cost
+    return distToNext + (next.distSq(goal) > current.distSq(goal) ? distToNext * 10 : distToNext);
+}
+
+/**
  * The AStar search algorithm (source: https://en.wikipedia.org/wiki/A*_search_algorithm)
  * @param {UMath.Vec2} start - The starting node
  * @param {UMath.Vec2} goal - The goal
  * @param {WorldMap} worldMap - The World to search in
- * @param {Number} actionDelay - Delay between actions
+ * @param {Number} [actionDelay] - Delay between actions
+ * @param {(node: UMath.Vec2, goal: UMath.Vec2) -> Number} [h] - Calculates the cost to go from node to goal
+ * @param {(current: UMath.Vec2, next: UMath.Vec2, start: UMath.Vec2, goal: UMath.Vec2) -> Number} [d] - Calculates the cost to go from current to next
  * @returns {Array<UMath.Vec2>} The path from start to goal
  */
-export async function AStar(start, goal, worldMap, actionDelay) {
+export async function AStar(start, goal, worldMap, actionDelay, h = heuristic, d = edgeWeigth) {
 
     worldMap.putCell(CELL_TYPES.START, start.x, start.y);
     worldMap.putCell(CELL_TYPES.GOAL, goal.x, goal.y);
@@ -85,7 +111,7 @@ export async function AStar(start, goal, worldMap, actionDelay) {
      * @type {Map<String, Number>}
      */
     const fScore = new Map();
-    fScore.set(start.toString(), start.distSq(goal));
+    fScore.set(start.toString(), h(start, goal));
 
     while (openSet.length > 0) {
         const [ current, currentIndex ] = lowestFScore(openSet, fScore);
@@ -127,11 +153,11 @@ export async function AStar(start, goal, worldMap, actionDelay) {
             
             if (gScore.get(neighbourStr) === undefined) { gScore.set(neighbourStr, Number.POSITIVE_INFINITY); }
 
-            const tentativeGScore = gScore.get(currentStr) + current.distSq(neighbour);
+            const tentativeGScore = gScore.get(currentStr) + d(current, neighbour, start, goal);
             if (tentativeGScore < gScore.get(neighbourStr)) {
                 cameFrom.set(neighbourStr, currentStr);
                 gScore.set(neighbourStr, tentativeGScore);
-                fScore.set(neighbourStr, gScore.get(neighbourStr) + neighbour.distSq(goal));
+                fScore.set(neighbourStr, gScore.get(neighbourStr) + h(neighbour, goal));
                 if (!openSet.includes(neighbour)) { openSet.push(neighbour); }
             }
         }
