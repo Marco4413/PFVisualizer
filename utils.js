@@ -2,6 +2,15 @@
 import * as WorldMap from "./WorldMap.js";
 
 /**
+ * Capitalizes the specified string
+ * @param {String} str - The string to capitalize
+ * @returns {String} The capitalized string
+ */
+export function capitalize(str) {
+    return str.substr(0, 1).toUpperCase() + str.substr(1);
+}
+
+/**
  * Used to delay function calls
  * @param {Number} ms - milliseconds
  */

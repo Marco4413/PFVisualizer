@@ -1,5 +1,6 @@
 
 import { wCanvas, UMath } from "./wCanvas/wcanvas.js";
+import { capitalize } from "./utils.js";
 import * as WorldMap from "./WorldMap.js";
 import { availableAlgorithms } from "./algorithms/allAlgorithms.js";
 
@@ -16,6 +17,11 @@ const KEY_BINDINGS = {
 const MIN_WORLD_SIZE = 8;
 const MAX_WORLD_SIZE = 400;
 const MAX_ACTION_TIME = 100;
+
+const GRID_COLOR = "#444";
+const BACKGROUND_COLOR = "#000";
+const TEXT_OUTLINE = "#000";
+const TEXT_COLOR = "#fff"
 // END SETTINGS
 
 let actionDelay = 25;
@@ -71,7 +77,7 @@ async function generatePath() {
  * @param {Number} cellSize - The spacing between each column and row
  */
 function drawGrid(canvas, x, y, cols, rows, cellSize) {
-    canvas.strokeCSS("#444");
+    canvas.strokeCSS(GRID_COLOR);
     canvas.strokeWeigth(1);
 
     if (cellSize < 1) { return; }
@@ -96,7 +102,7 @@ function drawGrid(canvas, x, y, cols, rows, cellSize) {
  * @param {Number} deltaTime
  */
 function draw(canvas, deltaTime) {
-    canvas.backgroundCSS("#000");
+    canvas.backgroundCSS(BACKGROUND_COLOR);
 
     if (WORLD_MAP) {
         WORLD_MAP.draw(canvas, SCALE);
@@ -113,9 +119,9 @@ function draw(canvas, deltaTime) {
 
     if (!lockPathGen && restartMessage) {
         const textSize = Math.min(canvas.canvas.width, canvas.canvas.height) / 20;
-        canvas.strokeCSS("#000");
+        canvas.strokeCSS(TEXT_OUTLINE);
         canvas.strokeWeigth(textSize / 55);
-        canvas.fillCSS("#fff");
+        canvas.fillCSS(TEXT_COLOR);
         canvas.textSize(textSize);
         canvas.text(
             `Press ${KEY_BINDINGS.restart} to generate a new path`, canvas.canvas.width / 2, canvas.canvas.height / 2,
@@ -233,11 +239,17 @@ window.addEventListener("load", () => {
 
     /** @type {HTMLDivElement} */
     const infoPanel = document.getElementById("infoPanel");
+    Object.keys(WorldMap.CELL_TYPES).forEach(type => {
+        const cellTypeDiv = document.createElement("div");
+        cellTypeDiv.innerHTML = `<span style="color: ${WorldMap.CELL_TYPES[type]}">■</span> : ${capitalize(type.toLowerCase())}`;
+        cellTypeDiv.classList.add("infoItem");
+        infoPanel.appendChild(cellTypeDiv);
+    });
+
     Object.keys(KEY_BINDINGS).forEach(action => {
         const key = KEY_BINDINGS[action];
-
         const actionDiv = document.createElement("div");
-        const formattedAction = action.split("_").map(s => s.substr(0, 1).toUpperCase() + s.substr(1)).join(" ");
+        const formattedAction = action.split("_").map(s => capitalize(s)).join(" ");
         actionDiv.innerText = `${key} : ${formattedAction}`;
         actionDiv.classList.add("infoItem");
         infoPanel.appendChild(actionDiv);
