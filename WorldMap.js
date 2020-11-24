@@ -59,9 +59,21 @@ export class WorldMap {
      * @param {Number} scale - The Scale of each world's cell
      */
     draw(canvas, scale = 16) {
-        this.mapToNodePairArray().forEach(
-            nodePair => drawNodePair(canvas, nodePair, this.pos.x, this.pos.y, scale)
-        );
+        if (this.hasBoundary) {
+            const offset = this.showBounds ? 1 : 0;
+            for (let x = 0 - offset; x < this.size.x + offset; x++) {
+                for (let y = 0 - offset; y < this.size.y + offset; y++) {
+                    const cell = this.getCell(x, y);
+                    if (cell !== CELL_TYPES.EMPTY) {
+                        drawNodePair(canvas, [{ x, y }, cell], this.pos.x, this.pos.y, scale);
+                    }
+                }
+            }
+        } else {
+            this.mapToNodePairArray().forEach(
+                nodePair => drawNodePair(canvas, nodePair, this.pos.x, this.pos.y, scale)
+            );
+        }
     }
 
     /**
