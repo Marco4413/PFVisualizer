@@ -17,32 +17,46 @@
         }
 
         .settingsPanel {
+            overflow: hidden;
+            padding: 2.5px;
             position: absolute;
             width: 20%;
             min-height: 3%;
             background-color: transparent;
         }
 
-        #algoSelect {
+        .settingsItem {
+            box-sizing: border-box;
+            margin: 2.5px;
             color: white;
             background-color: black;
             border-color: gainsboro;
             width: 100%;
             height: 100%;
+            text-align: center;
             font-size: 100%;
             border-radius: 5px;
             border-width: 2px;
         }
 
-        select:focus {
+        .settingsItem:focus {
             outline: none;
+        }
+
+        input.settingsItem:focus {
+            text-align: left;
+        }
+
+        input.settingsItem:focus::placeholder {
+            color: transparent;
         }
     </style>
 </head>
 <body>
-    <div class="settingsPanel">
-        <select id="algoSelect" onchange="changeAlgorithm(this)">
-        </select>
+    <div id="SP" class="settingsPanel">
+        <select id="algoSelect" class="settingsItem" onchange="changeAlgorithm(this)"/>
+        <input type="text" placeholder="World's Columns" class="settingsItem" onchange="changeWorldSize(this, 'x')">
+        <input type="text" placeholder="World's Rows" class="settingsItem" onchange="changeWorldSize(this, 'y')">
     </div>
 </body>
 </html>

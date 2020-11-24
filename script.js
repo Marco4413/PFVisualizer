@@ -10,6 +10,9 @@ const KEY_BINDINGS = {
 
 let SCALE = 64;
 
+const MIN_WORLD_SIZE = 8;
+const MAX_WORLD_SIZE = 400;
+
 const ACTION_TIME = 25;
 
 /** @type {WorldMap.WorldMap} */
@@ -99,15 +102,26 @@ function draw(canvas, deltaTime) {
     );
 
     if (!lockPathGen) {
+        const textSize = Math.min(canvas.canvas.width, canvas.canvas.height) / 20;
         canvas.strokeCSS("#000");
-        canvas.strokeWeigth(SCALE / 55);
+        canvas.strokeWeigth(textSize / 55);
         canvas.fillCSS("#fff");
-        canvas.textSize(SCALE * 0.88);
+        canvas.textSize(textSize);
         canvas.text(
             `Press ${KEY_BINDINGS.restart} to generate a new path`, canvas.canvas.width / 2, canvas.canvas.height / 2,
             { "horizontalAlignment": "center", "verticalAlignment": "center", "noStroke": false }
         );
     }
+}
+
+function recalcScale() {
+    SCALE = Math.min(
+        Math.floor(window.innerHeight / WORLD_MAP.size.y),
+        Math.floor(window.innerWidth / WORLD_MAP.size.x)
+    );
+
+    WORLD_MAP.pos.x = (window.innerWidth - WORLD_MAP.size.x * SCALE) / 2;
+    WORLD_MAP.pos.y = (window.innerHeight - WORLD_MAP.size.y * SCALE) / 2;
 }
 
 /**
@@ -126,6 +140,22 @@ window.changeAlgorithm = (element) => {
     console.log(`No Algorithm was found for ${element.value}`);
 }
 
+/**
+ * Change's the world's size based on what the input element contains
+ * @param {HTMLInputElement} element - The element that contains the new size
+ * @param {"x"|"y"} axis - The axis the size should be change on
+ */
+window.changeWorldSize = (element, axis) => {
+    const newValue = parseInt(element.value);
+    if (Number.isNaN(newValue) || newValue < MIN_WORLD_SIZE || newValue > MAX_WORLD_SIZE) {
+        element.value = "";
+    } else {
+        WORLD_MAP.size[axis] = newValue;
+
+        recalcScale();
+    }
+}
+
 window.addEventListener("keydown", ev => {
     switch (ev.key.toUpperCase()) {
         case KEY_BINDINGS.restart: {
@@ -133,8 +163,8 @@ window.addEventListener("keydown", ev => {
             break;
         }
         case KEY_BINDINGS.toggleAlgoSelect: {
-            const algorithmSelect = document.getElementById("algoSelect");
-            algorithmSelect.classList.toggle("hidden");
+            const settingsPanel = document.getElementById("SP");
+            settingsPanel.classList.toggle("hidden");
             break;
         }
     }
@@ -159,13 +189,7 @@ window.addEventListener("load", () => {
             canvas.canvas.width = window.innerWidth + 1;
             canvas.canvas.height = window.innerHeight + 1;
 
-            SCALE = Math.min(
-                Math.floor(window.innerHeight / WORLD_MAP.size.y),
-                Math.floor(window.innerWidth / WORLD_MAP.size.x)
-            );
-
-            WORLD_MAP.pos.x = (window.innerWidth - WORLD_MAP.size.x * SCALE) / 2;
-            WORLD_MAP.pos.y = (window.innerHeight - WORLD_MAP.size.y * SCALE) / 2;
+            recalcScale();
         }
     });
 });
