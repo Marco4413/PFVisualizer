@@ -124,19 +124,7 @@ export async function AStar(start, goal, worldMap, actionDelay, h = heuristic, d
 
         openSet.splice(currentIndex, 1);
 
-        const neighbours = [];
-        [
-            UMath.Vec2.add(current, { x:  1, y:  0 }),
-            UMath.Vec2.add(current, { x: -1, y:  0 }),
-            UMath.Vec2.add(current, { x:  0, y:  1 }),
-            UMath.Vec2.add(current, { x:  0, y: -1 })
-        ].forEach(
-            neighbour => {
-                if (!worldMap.isCellSolid(neighbour.x, neighbour.y)) {
-                    neighbours.push(neighbour);
-                }
-            }
-        );
+        const neighbours = worldMap.getNeighbours(current.x, current.y);
 
         for (let i = 0; i < neighbours.length; i++) {
 
