@@ -28,6 +28,7 @@
         .settingsItem {
             box-sizing: border-box;
             margin: 2.5px;
+            padding: 2.5px;
             color: white;
             background-color: black;
             border-color: gainsboro;
@@ -57,6 +58,7 @@
         <select id="algoSelect" class="settingsItem" onchange="changeAlgorithm(this)"/>
         <input type="text" placeholder="World's Columns" class="settingsItem" onchange="changeWorldSize(this, 'x')">
         <input type="text" placeholder="World's Rows" class="settingsItem" onchange="changeWorldSize(this, 'y')">
+        <input type="text" placeholder="Move Time (ms)" class="settingsItem" onchange="changeActionDelay(this, 'No Delay!')">
     </div>
 </body>
 </html>

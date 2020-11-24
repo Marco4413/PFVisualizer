@@ -14,9 +14,10 @@ const KEY_BINDINGS = {
 
 const MIN_WORLD_SIZE = 8;
 const MAX_WORLD_SIZE = 400;
+const MAX_ACTION_TIME = 100;
 // END SETTINGS
 
-let actionTime = 25;
+let actionDelay = 25;
 let gridEnabled = true;
 let restartMessage = true;
 
@@ -52,7 +53,7 @@ async function generatePath() {
 
     const path = await currentAlgorithm.search(
         start, goal,
-        WORLD_MAP, actionTime
+        WORLD_MAP, actionDelay
     );
 
     lockPathGen = false;
@@ -162,6 +163,30 @@ window.changeWorldSize = (element, axis) => {
         WORLD_MAP.size[axis] = newValue;
 
         recalcScale();
+    }
+}
+
+{
+    let placeholder;
+    /**
+     * Changes the delay between each Path Finding key move
+     * @param {HTMLInputElement} element - The element to take the value from
+     * @param {String} noDelayPH - The placeholder used when no delay is none
+     */
+    window.changeActionDelay = (element, noDelayPH) => {
+        if (placeholder === undefined) { placeholder = element.placeholder; }
+
+        const newDelay = parseFloat(element.value);
+        if (lockPathGen || Number.isNaN(newDelay) || newDelay > MAX_ACTION_TIME) {
+            element.value = "";
+        } else if (newDelay <= 0) {
+            element.value = "";
+            if (noDelayPH) { element.blur(); element.placeholder = noDelayPH; }
+            actionDelay = undefined;
+        } else {
+            element.placeholder = placeholder;
+            actionDelay = newDelay;
+        }
     }
 }
 
