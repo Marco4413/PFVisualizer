@@ -13,6 +13,7 @@ There are 6 different colours:
  - **GREEN** -> Path (The path to the end)
  - **WHITE** -> Obstacles (Walls)
 
-## How do I generate a new path to calculate?
+## What are the key bindings for this app?
 
-You can press **R** to create a new path (You can only create a path once the old one is fully calculated, or you can reload the page before generating a new one)
+ - **R** : Generates a new path (can only be done when the old one finished);
+ - **H** : Toggles the algorithm selector.
