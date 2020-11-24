@@ -16,4 +16,6 @@ There are 6 different colours:
 ## What are the key bindings for this app?
 
  - **R** : Generates a new path (can only be done when the old one finished);
- - **H** : Toggles the settings panel.
+ - **H** : Toggles the settings panel;
+ - **G** : Toggles the grid;
+ - **U** : Toggles the restart message.
