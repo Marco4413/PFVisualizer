@@ -136,8 +136,8 @@ function recalcScale() {
         Math.floor(window.innerWidth / WORLD_MAP.size.x)
     );
 
-    WORLD_MAP.pos.x = (window.innerWidth - WORLD_MAP.size.x * SCALE) / 2;
-    WORLD_MAP.pos.y = (window.innerHeight - WORLD_MAP.size.y * SCALE) / 2;
+    WORLD_MAP.pos.x = Math.floor((window.innerWidth - WORLD_MAP.size.x * SCALE) / 2);
+    WORLD_MAP.pos.y = Math.floor((window.innerHeight - WORLD_MAP.size.y * SCALE) / 2);
 }
 
 /**
