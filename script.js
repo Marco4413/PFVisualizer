@@ -155,9 +155,10 @@ window.changeAlgorithm = (element) => {
  */
 window.changeWorldSize = (element, axis) => {
     const newValue = parseInt(element.value);
-    if (Number.isNaN(newValue) || newValue < MIN_WORLD_SIZE || newValue > MAX_WORLD_SIZE) {
+    if (lockPathGen || Number.isNaN(newValue) || newValue < MIN_WORLD_SIZE || newValue > MAX_WORLD_SIZE) {
         element.value = "";
     } else {
+        WORLD_MAP.clearMap();
         WORLD_MAP.size[axis] = newValue;
 
         recalcScale();
