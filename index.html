@@ -10,32 +10,51 @@
             padding: 0px;
             margin: 0px;
             overflow: hidden;
+            font-family: "Consolas", Arial, Helvetica, sans-serif;
         }
 
         .hidden {
             display: none;
         }
 
-        .settingsPanel {
-            overflow: hidden;
+        .panel {
             padding: 2.5px;
             position: absolute;
-            width: 20%;
-            min-height: 3%;
             background-color: transparent;
         }
 
-        .settingsItem {
+        #settingsPanel {
+            width: 20%;
+            min-height: 3%;
+        }
+
+        #infoPanel {
+            right: 0%;
+            bottom: 0%;
+            background-color: black;
+            border: solid;
+            border-color: white;
+            border-radius: 5px;
+            border-width: 2px;
+        }
+
+        .infoItem, .settingsItem {
             box-sizing: border-box;
             margin: 2.5px;
             padding: 2.5px;
             color: white;
             background-color: black;
-            border-color: gainsboro;
+            border: none;
             width: 100%;
             height: 100%;
-            text-align: center;
+            text-align: left;
             font-size: 100%;
+        }
+
+        .settingsItem {
+            text-align: center;
+            border-color: gainsboro;
+            border: solid;
             border-radius: 5px;
             border-width: 2px;
         }
@@ -54,11 +73,12 @@
     </style>
 </head>
 <body>
-    <div id="SP" class="settingsPanel">
-        <select id="algoSelect" class="settingsItem" onchange="changeAlgorithm(this)"/>
+    <div id="settingsPanel" class="panel">
+        <select id="algoSelect" class="settingsItem" onchange="changeAlgorithm(this)"></select>
         <input type="text" placeholder="World's Columns" class="settingsItem" onchange="changeWorldSize(this, 'x')">
         <input type="text" placeholder="World's Rows" class="settingsItem" onchange="changeWorldSize(this, 'y')">
         <input type="text" placeholder="Move Time (ms)" class="settingsItem" onchange="changeActionDelay(this, 'No Delay!')">
     </div>
+    <div id="infoPanel" class="panel"></div>
 </body>
 </html>

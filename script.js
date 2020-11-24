@@ -6,10 +6,11 @@ import { availableAlgorithms } from "./algorithms/allAlgorithms.js";
 
 // SETTINGS
 const KEY_BINDINGS = {
-    "restart"             : "R",
-    "toggleSettings"      : "H",
-    "toggleGrid"          : "G",
-    "toggleRestartMessage": "U"
+    "restart"               : "R",
+    "toggle_settings"       : "H",
+    "toggle_grid"           : "G",
+    "toggle_restart_message": "U",
+    "toggle_info"           : "I"
 };
 
 const MIN_WORLD_SIZE = 8;
@@ -196,17 +197,22 @@ window.addEventListener("keydown", ev => {
             generatePath();
             break;
         }
-        case KEY_BINDINGS.toggleSettings: {
-            const settingsPanel = document.getElementById("SP");
+        case KEY_BINDINGS.toggle_settings: {
+            const settingsPanel = document.getElementById("settingsPanel");
             settingsPanel.classList.toggle("hidden");
             break;
         }
-        case KEY_BINDINGS.toggleGrid: {
+        case KEY_BINDINGS.toggle_grid: {
             gridEnabled = !gridEnabled;
             break;
         }
-        case KEY_BINDINGS.toggleRestartMessage: {
+        case KEY_BINDINGS.toggle_restart_message: {
             restartMessage = !restartMessage;
+            break;
+        }
+        case KEY_BINDINGS.toggle_info: {
+            const infoPanel = document.getElementById("infoPanel");
+            infoPanel.classList.toggle("hidden");
             break;
         }
     }
@@ -224,6 +230,18 @@ window.addEventListener("load", () => {
         }
     );
     window.changeAlgorithm(algorithmSelect);
+
+    /** @type {HTMLDivElement} */
+    const infoPanel = document.getElementById("infoPanel");
+    Object.keys(KEY_BINDINGS).forEach(action => {
+        const key = KEY_BINDINGS[action];
+
+        const actionDiv = document.createElement("div");
+        const formattedAction = action.split("_").map(s => s.substr(0, 1).toUpperCase() + s.substr(1)).join(" ");
+        actionDiv.innerText = `${key} : ${formattedAction}`;
+        actionDiv.classList.add("infoItem");
+        infoPanel.appendChild(actionDiv);
+    });
 
     new wCanvas({
         "onDraw": draw,
