@@ -175,4 +175,40 @@ export class WorldMap {
         return SOLID_CELL_TYPES[this.getCell(x, y)] ? true : false;
     }
 
+    /**
+     * Searches all (non-solid) neighbours of the specified origin
+     * @param {Number} x - The x pos of the origin
+     * @param {Number} y - The y pos of the origin
+     * @param {Boolean} [diagonals] - Whether or not diagonals are valid neighbours
+     * @returns {Array<UMath.Vec2>} An array containing all pos of neighbours
+     */
+    getNeighbours(x, y, diagonals = false) {
+        const origin = { x, y };
+        const neighbours = [];
+        
+        const possibleNeighbours = [
+            UMath.Vec2.add(origin, { x:  1, y:  0 }),
+            UMath.Vec2.add(origin, { x: -1, y:  0 }),
+            UMath.Vec2.add(origin, { x:  0, y:  1 }),
+            UMath.Vec2.add(origin, { x:  0, y: -1 })
+        ];
+
+        if (diagonals) {
+            possibleNeighbours.push(UMath.Vec2.add(origin, { x:  1, y:  0 }));
+            possibleNeighbours.push(UMath.Vec2.add(origin, { x: -1, y:  0 }));
+            possibleNeighbours.push(UMath.Vec2.add(origin, { x:  0, y:  1 }));
+            possibleNeighbours.push(UMath.Vec2.add(origin, { x:  0, y: -1 }));
+        }
+        
+        possibleNeighbours.forEach(
+            neighbour => {
+                if (!this.isCellSolid(neighbour.x, neighbour.y)) {
+                    neighbours.push(neighbour);
+                }
+            }
+        );
+
+        return neighbours;
+    }
+
 }
