@@ -74,9 +74,7 @@ function heuristic(node, goal) {
  * @returns {Number} The cost to reach next from current
  */
 function edgeWeigth(current, next, start, goal) {
-    const distToNext = current.distSq(next);
-    // If we're going away from the goal we want to go ham on the cost
-    return distToNext + (next.distSq(goal) > current.distSq(goal) ? distToNext * 10 : distToNext);
+    return current.distSq(next);
 }
 
 /**
