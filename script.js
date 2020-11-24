@@ -8,15 +8,12 @@ const KEY_BINDINGS = {
     "toggleAlgoSelect" : "H"
 };
 
-const CELL_SIZE = 64;
-
-let COLS = 0;
-let ROWS = 0;
+let SCALE = 64;
 
 const ACTION_TIME = 25;
 
 /** @type {WorldMap.WorldMap} */
-const WORLD_MAP = new WorldMap.WorldMap(0, 0, 0, 0, false, false);
+const WORLD_MAP = new WorldMap.WorldMap(0, 0, 30, 15, true, true);
 
 let currentAlgorithm = availableAlgorithms[0];
 
@@ -31,7 +28,6 @@ async function generatePath() {
     lockPathGen = true;
 
     WORLD_MAP.clearMap();
-    WORLD_MAP.hollowRect(WorldMap.CELL_TYPES.WALL, -1, -1, COLS + 2, ROWS + 2);
 
     const start = WORLD_MAP.pickRandomPos();
     const goal = WORLD_MAP.pickRandomPos();
@@ -55,6 +51,36 @@ async function generatePath() {
 }
 
 /**
+ * Draws a grid on the specified pos with the specified size
+ * @param {wCanvas} canvas - The canvas to draw the grid on
+ * @param {Number} x - The x pos of the origin of the grid
+ * @param {Number} y - The y pos of the origin of the grid
+ * @param {Number} cols - The number of columns in the grid
+ * @param {Number} rows - The number of rows in the grid
+ * @param {Number} cellSize - The spacing between each column and row
+ */
+function drawGrid(canvas, x, y, cols, rows, cellSize) {
+    canvas.strokeCSS("#444");
+    canvas.strokeWeigth(1);
+
+    if (cellSize < 1) { return; }
+    for (let col = 0; col <= cols; col++) {
+        canvas.line(
+            x + col * cellSize, 0,
+            x + col * cellSize, canvas.canvas.height
+        );
+    }
+
+    for (let row = 0; row <= rows; row++) {
+        canvas.line(
+            0, y + row * cellSize,
+            canvas.canvas.width, y + row * cellSize
+        );
+    }
+
+}
+
+/**
  * @param {wCanvas} canvas
  * @param {Number} deltaTime
  */
@@ -62,34 +88,21 @@ function draw(canvas, deltaTime) {
     canvas.backgroundCSS("#000");
 
     if (WORLD_MAP) {
-        WORLD_MAP.draw(canvas, CELL_SIZE);
+        WORLD_MAP.draw(canvas, SCALE);
     }
 
-    canvas.strokeCSS("#444");
-    canvas.strokeWeigth(1);
-    for (let col = 0; col <= COLS; col++) {
-        canvas.line(
-            WORLD_MAP.pos.x + col * CELL_SIZE,
-            0,
-            WORLD_MAP.pos.x + col * CELL_SIZE,
-            canvas.canvas.height
-        );
-    }
-
-    for (let row = 0; row <= ROWS; row++) {
-        canvas.line(
-            0,
-            WORLD_MAP.pos.y + row * CELL_SIZE,
-            canvas.canvas.width,
-            WORLD_MAP.pos.y + row * CELL_SIZE
-        );
-    }
+    drawGrid(
+        canvas,
+        WORLD_MAP.pos.x % SCALE, WORLD_MAP.pos.y % SCALE,
+        Math.floor(canvas.canvas.width / SCALE), Math.floor(canvas.canvas.height / SCALE),
+        SCALE
+    );
 
     if (!lockPathGen) {
         canvas.strokeCSS("#000");
-        canvas.strokeWeigth(1);
+        canvas.strokeWeigth(SCALE / 55);
         canvas.fillCSS("#fff");
-        canvas.textSize(canvas.canvas.height / 20);
+        canvas.textSize(SCALE * 0.88);
         canvas.text(
             `Press ${KEY_BINDINGS.restart} to generate a new path`, canvas.canvas.width / 2, canvas.canvas.height / 2,
             { "horizontalAlignment": "center", "verticalAlignment": "center", "noStroke": false }
@@ -146,13 +159,13 @@ window.addEventListener("load", () => {
             canvas.canvas.width = window.innerWidth + 1;
             canvas.canvas.height = window.innerHeight + 1;
 
-            COLS = Math.floor(canvas.canvas.width / CELL_SIZE);
-            ROWS = Math.floor(canvas.canvas.height / CELL_SIZE);
+            SCALE = Math.min(
+                Math.floor(window.innerHeight / WORLD_MAP.size.y),
+                Math.floor(window.innerWidth / WORLD_MAP.size.x)
+            );
 
-            WORLD_MAP.pos.x = (window.innerWidth % CELL_SIZE) / 2;
-            WORLD_MAP.pos.y = (window.innerHeight % CELL_SIZE) / 2;
-            WORLD_MAP.size.x = COLS;
-            WORLD_MAP.size.y = ROWS;
+            WORLD_MAP.pos.x = (window.innerWidth - WORLD_MAP.size.x * SCALE) / 2;
+            WORLD_MAP.pos.y = (window.innerHeight - WORLD_MAP.size.y * SCALE) / 2;
         }
     });
 });
