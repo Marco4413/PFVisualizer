@@ -1,8 +1,12 @@
 
 import { wCanvas, UMath } from "./wCanvas/wcanvas.js";
-import * as utils from "./utils.js";
 import * as WorldMap from "./WorldMap.js";
 import { availableAlgorithms } from "./algorithms/allAlgorithms.js";
+
+const KEY_BINDINGS = {
+    "restart"          : "R",
+    "toggleAlgoSelect" : "H"
+};
 
 const CELL_SIZE = 64;
 
@@ -87,7 +91,7 @@ function draw(canvas, deltaTime) {
         canvas.fillCSS("#fff");
         canvas.textSize(canvas.canvas.height / 20);
         canvas.text(
-            "Press R to generate a new path", canvas.canvas.width / 2, canvas.canvas.height / 2,
+            `Press ${KEY_BINDINGS.restart} to generate a new path`, canvas.canvas.width / 2, canvas.canvas.height / 2,
             { "horizontalAlignment": "center", "verticalAlignment": "center", "noStroke": false }
         );
     }
@@ -110,7 +114,17 @@ window.changeAlgorithm = (element) => {
 }
 
 window.addEventListener("keydown", ev => {
-    if (ev.key === "r") { generatePath(); }
+    switch (ev.key.toUpperCase()) {
+        case KEY_BINDINGS.restart: {
+            generatePath();
+            break;
+        }
+        case KEY_BINDINGS.toggleAlgoSelect: {
+            const algorithmSelect = document.getElementById("algoSelect");
+            algorithmSelect.classList.toggle("hidden");
+            break;
+        }
+    }
 });
 
 window.addEventListener("load", () => {
