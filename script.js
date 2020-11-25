@@ -118,7 +118,7 @@ function draw(canvas, deltaTime) {
     }
 
     if (!lockPathGen && restartMessage) {
-        const textSize = Math.min(canvas.canvas.width, canvas.canvas.height) / 20;
+        const textSize = Math.min(canvas.canvas.width, canvas.canvas.height) / 15;
         canvas.strokeCSS(TEXT_OUTLINE);
         canvas.strokeWeigth(textSize / 55);
         canvas.fillCSS(TEXT_COLOR);
