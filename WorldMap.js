@@ -3,13 +3,13 @@ import { wCanvas, UMath } from "./wCanvas/wcanvas.js";
 import { drawNodePair } from "./utils.js";
 
 export const CELL_TYPES = {
-    "WALL": "#fff",
+    "WALL": "#889f9f",
     "EMPTY": "#0000",
     "START": "#f00",
-    "GOAL": "#ff0",
+    "GOAL": "#0f0",
     "CALCULATING": "#00f",
     "CALCULATED": "#777",
-    "PATH": "#0f0"
+    "PATH": "#dd0"
 };
 
 /**
