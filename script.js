@@ -22,6 +22,8 @@ const GRID_COLOR = "#444";
 const BACKGROUND_COLOR = "#000";
 const TEXT_OUTLINE = "#000";
 const TEXT_COLOR = "#fff"
+
+const MAX_CELL_QUEUE = 10;
 // END SETTINGS
 
 let actionDelay = 25;
@@ -128,8 +130,10 @@ const pathGenerator = new Worker("./genPath.js", { "type": "module" });
 pathGenerator.addEventListener("message", ev => {
     const [ messageType, ...args ] = ev.data;
     switch (messageType) {
-        case "map_add_cell": {
-            WORLD_MAP.putCell(...args);
+        case "map_add_cells": {
+            for (let i = 0; i < args.length; i += 3) {
+                WORLD_MAP.putCell(args[i], args[i + 1], args[i + 2]);
+            }
             break;
         }
         case "map_reset": {
@@ -149,7 +153,7 @@ pathGenerator.addEventListener("message", ev => {
 
 function generatePath() {
     if (isPathGenLocked) { return; }
-    pathGenerator.postMessage([ currentAlgorithm, actionDelay, WORLD_MAP.size.x, WORLD_MAP.size.y, WORLD_MAP.hasBoundary]);
+    pathGenerator.postMessage([ MAX_CELL_QUEUE, currentAlgorithm, actionDelay, WORLD_MAP.size.x, WORLD_MAP.size.y, WORLD_MAP.hasBoundary]);
 }
 
 /**

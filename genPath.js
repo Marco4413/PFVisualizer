@@ -32,21 +32,39 @@ async function generatePath(WORLD_MAP, algorithm, actionDelay = 0) {
         WORLD_MAP, actionDelay
     );
 
+    WORLD_MAP.sendCellQueue();
+
     lockPathGen = false;
     self.postMessage([ "state_change", "stop" ]);
     return path;
 }
 
 self.addEventListener("message", ev => {
-    const [ algoIndex, actionTime, width, height, hasBounds ] = ev.data;
+    const [ maxCellQueue, algoIndex, actionTime, width, height, hasBounds ] = ev.data;
     const wm = new WorldMap.WorldMap(0, 0, width, height, hasBounds);
 
     const nativePutCell = wm.putCell.bind(wm);
     const nativeClearMap = wm.clearMap.bind(wm);
 
+    wm.cellQueue = [];
+    wm.sendCellQueue = () => {
+        const msg = [ "map_add_cells" ];
+        msg.push(...wm.cellQueue);
+        self.postMessage(msg);
+        wm.cellQueue = [];
+    }
+
     wm.putCell = (cellType, x, y) => {
         nativePutCell(cellType, x, y);
-        self.postMessage([ "map_add_cell", cellType, x, y ]);
+
+        if (actionTime > 0) {
+            self.postMessage([ "map_add_cells", cellType, x, y ]);
+        } else {
+            wm.cellQueue.push(cellType, x, y);
+            if (wm.cellQueue.length >= maxCellQueue) {
+                wm.sendCellQueue();
+            }
+        }
     }
     wm.clearMap = () => {
         nativeClearMap();
