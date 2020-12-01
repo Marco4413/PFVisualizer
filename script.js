@@ -1,5 +1,5 @@
 
-import { wCanvas, UMath } from "./wCanvas/wcanvas.js";
+import { wCanvas } from "./wCanvas/wcanvas.js";
 import { capitalize } from "./utils.js";
 import * as WorldMap from "./WorldMap.js";
 import { availableAlgorithms } from "./algorithms/allAlgorithms.js";
@@ -33,39 +33,7 @@ const WORLD_MAP = new WorldMap.WorldMap(0, 0, 30, 15, true, true);
 
 let SCALE = 64;
 let currentAlgorithm = availableAlgorithms[0];
-
-// Used to lock path gen when one is already being generated
-let lockPathGen = false;
-/**
- * Generates a starting point, an end point, a WorldMap with random walls and calculates the path from start to end
- * @returns {Array<UMath.Vec2>} The path to the goal
- */
-async function generatePath() {
-    if (lockPathGen) { return null; }
-    lockPathGen = true;
-
-    WORLD_MAP.clearMap();
-
-    const start = WORLD_MAP.pickRandomPos();
-    const goal = WORLD_MAP.pickRandomPos();
-
-    for (let i = 0; i < WORLD_MAP.size.x * WORLD_MAP.size.y / 3; i++) {
-        const pos = WORLD_MAP.pickRandomPos();
-        if (start.x === pos.x && start.y === pos.y || goal.x === pos.x && goal.y === pos.y) {
-            continue;
-        }
-
-        WORLD_MAP.putCell(WorldMap.CELL_TYPES.WALL, pos.x, pos.y);
-    }
-
-    const path = await currentAlgorithm.search(
-        start, goal,
-        WORLD_MAP, actionDelay
-    );
-
-    lockPathGen = false;
-    return path;
-}
+let isPathGenLocked = false;
 
 /**
  * Draws a grid on the specified pos with the specified size
@@ -117,7 +85,7 @@ function draw(canvas, deltaTime) {
         );
     }
 
-    if (!lockPathGen && restartMessage) {
+    if (!isPathGenLocked && restartMessage) {
         const textSize = Math.min(canvas.canvas.width, canvas.canvas.height) / 15;
         canvas.strokeCSS(TEXT_OUTLINE);
         canvas.strokeWeigth(textSize / 55);
@@ -149,11 +117,39 @@ window.changeAlgorithm = (element) => {
     for (let i = 0; i < availableAlgorithms.length; i++) {
         if (availableAlgorithms[i].longName === element.value) {
             console.log(`Chosen Algorithm was found at index ${i}`);
-            currentAlgorithm = availableAlgorithms[i];
+            currentAlgorithm = i;
             return;
         }
     }
     console.log(`No Algorithm was found for ${element.value}`);
+}
+
+const pathGenerator = new Worker("./genPath.js", { "type": "module" });
+pathGenerator.addEventListener("message", ev => {
+    const [ messageType, ...args ] = ev.data;
+    switch (messageType) {
+        case "map_add_cell": {
+            WORLD_MAP.putCell(...args);
+            break;
+        }
+        case "map_reset": {
+            WORLD_MAP.clearMap();
+            break;
+        }
+        case "state_change": {
+            if (args[0] === "start") {
+                isPathGenLocked = true;
+            } else if (args[0] === "stop") {
+                isPathGenLocked = false;
+            }
+            break;
+        }
+    }
+});
+
+function generatePath() {
+    if (isPathGenLocked) { return; }
+    pathGenerator.postMessage([ currentAlgorithm, actionDelay, WORLD_MAP.size.x, WORLD_MAP.size.y, WORLD_MAP.hasBoundary]);
 }
 
 /**
@@ -163,7 +159,7 @@ window.changeAlgorithm = (element) => {
  */
 window.changeWorldSize = (element, axis) => {
     const newValue = parseInt(element.value);
-    if (lockPathGen || Number.isNaN(newValue) || newValue < MIN_WORLD_SIZE || newValue > MAX_WORLD_SIZE) {
+    if (isPathGenLocked || Number.isNaN(newValue) || newValue < MIN_WORLD_SIZE || newValue > MAX_WORLD_SIZE) {
         element.value = "";
     } else {
         WORLD_MAP.clearMap();
@@ -184,7 +180,7 @@ window.changeWorldSize = (element, axis) => {
         if (placeholder === undefined) { placeholder = element.placeholder; }
 
         const newDelay = parseFloat(element.value);
-        if (lockPathGen || Number.isNaN(newDelay) || newDelay > MAX_ACTION_TIME) {
+        if (isPathGenLocked || Number.isNaN(newDelay) || newDelay > MAX_ACTION_TIME) {
             element.value = "";
         } else if (newDelay <= 0) {
             element.value = "";
