@@ -6,33 +6,36 @@ import { availableAlgorithms } from "./algorithms/allAlgorithms.js";
 let lockPathGen = false;
 /**
  * Generates a starting point, an end point, a WorldMap with random walls and calculates the path from start to end
+ * @param {WorldMap.WorldMap} worldMap - The world map to get cell data from
+ * @param {availableAlgorithms[0]} algorithm - The algorithm to use
+ * @param {Number} actionDelay - The delay between each algorithm's move
  * @returns {Array<UMath.Vec2>} The path to the goal
  */
-async function generatePath(WORLD_MAP, algorithm, actionDelay = 0) {
+async function generatePath(worldMap, algorithm, actionDelay = 0) {
     if (lockPathGen) { return null; }
     lockPathGen = true;
     self.postMessage([ "state_change", "start" ]);
 
-    WORLD_MAP.clearMap();
+    worldMap.clearMap();
 
-    const start = WORLD_MAP.pickRandomPos();
-    const goal = WORLD_MAP.pickRandomPos();
+    const start = worldMap.pickRandomPos();
+    const goal = worldMap.pickRandomPos();
 
-    for (let i = 0; i < WORLD_MAP.size.x * WORLD_MAP.size.y / 3; i++) {
-        const pos = WORLD_MAP.pickRandomPos();
+    for (let i = 0; i < worldMap.size.x * worldMap.size.y / 3; i++) {
+        const pos = worldMap.pickRandomPos();
         if (start.x === pos.x && start.y === pos.y || goal.x === pos.x && goal.y === pos.y) {
             continue;
         }
 
-        WORLD_MAP.putCell(WorldMap.CELL_TYPES.WALL, pos.x, pos.y);
+        worldMap.putCell(WorldMap.CELL_TYPES.WALL, pos.x, pos.y);
     }
 
     const path = await algorithm.search(
         start, goal,
-        WORLD_MAP, actionDelay
+        worldMap, actionDelay
     );
 
-    WORLD_MAP.sendCellQueue();
+    worldMap.sendCellQueue();
 
     lockPathGen = false;
     self.postMessage([ "state_change", "stop" ]);
