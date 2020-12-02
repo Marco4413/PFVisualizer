@@ -51,16 +51,25 @@ export class WorldMap {
 
         this.hasBoundary = hasBoundary;
         this.showBounds = showBounds;
-    }
 
-    /**
-     * Draws the world to the specified canvas with the specified scale
-     * @param {wCanvas} canvas - The canvas to draw the world on
-     * @param {Number} scale - The Scale of each world's cell
-     */
-    draw(canvas, scale = 16) {
-        if (this.hasBoundary) {
-            const offset = this.showBounds ? 1 : 0;
+        let isDirty = true;
+        if (typeof document === "undefined") {
+            this.internalFrameBuffer = null;
+        } else {
+            this.internalFrameBuffer = new wCanvas({
+                "canvas": document.createElement("canvas"),
+                "onResize": (canvas) => {
+                    canvas.canvas.width = window.innerWidth + 1;
+                    canvas.canvas.height = window.innerHeight + 1;
+                    isDirty = true;
+                }
+            });
+        }
+
+        this.changedCells = [];
+
+        const drawWholeMap = (canvas, scale = 16) => {
+            const offset = this.hasBoundary && this.showBounds ? 1 : 0;
             for (let x = 0 - offset; x < this.size.x + offset; x++) {
                 for (let y = 0 - offset; y < this.size.y + offset; y++) {
                     const cell = this.getCell(x, y);
@@ -69,18 +78,42 @@ export class WorldMap {
                     }
                 }
             }
-        } else {
-            this.mapToNodePairArray().forEach(
-                nodePair => drawNodePair(canvas, nodePair, this.pos.x, this.pos.y, scale)
-            );
         }
-    }
+        
+        /**
+        * Draws the world to the specified canvas with the specified scale
+        * @param {wCanvas} canvas - The canvas to draw the world on
+        * @param {Number} scale - The Scale of each world's cell
+        */
+        this.draw = (canvas, scale = 16) => {
+            if (this.internalFrameBuffer === null) {
+                drawWholeMap(canvas, scale);
+            } else {
+                if (isDirty) {
+                    drawWholeMap(this.internalFrameBuffer, scale);
+                    isDirty = false;
+                } else {
+                    for (let i = 0; i < this.changedCells.length; i += 3) {
+                        drawNodePair(this.internalFrameBuffer, [{ x: this.changedCells[i + 1], y: this.changedCells[i + 2] }, this.changedCells[i]], this.pos.x, this.pos.y, scale);
+                    }
+                }
+    
+                canvas.context.drawImage(this.internalFrameBuffer.canvas, 0, 0);
+                this.changedCells = [];
+            }
+    
+        }
 
-    /**
-     * Clears the map
-     */
-    clearMap() {
-        this.map = new Map();
+        /**
+         * Clears the map
+         */
+        this.clearMap = () => {
+            this.map = new Map();
+            if (this.internalFrameBuffer !== null) {
+                this.internalFrameBuffer.clear();
+                isDirty = true;
+            }
+        }
     }
 
     /**
@@ -144,6 +177,9 @@ export class WorldMap {
 
         if (!this.map.has(x)) { this.map.set(x, new Map()); }
         this.map.get(x).set(y, cell);
+        if (this.internalFrameBuffer !== null) {
+            this.changedCells.push(cell, x, y);
+        }
         return cell;
     }
 
