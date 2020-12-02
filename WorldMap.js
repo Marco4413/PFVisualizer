@@ -41,8 +41,9 @@ export class WorldMap {
      * @param {Number} h - The height (in cells) of the world
      * @param {Boolean} [hasBoundary] - Whether or not the world has boundaries
      * @param {Boolean} [showBounds] - Whether or not to show the world's boudaries
+     * @param {Boolean} [createInternalBuffer] - Whether or not to create an internal buffer to draw faster
      */
-    constructor(x, y, w, h, hasBoundary = true, showBounds = true) {
+    constructor(x, y, w, h, hasBoundary = true, showBounds = true, createInternalBuffer = true) {
         this.pos = new UMath.Vec2(x, y);
         this.size = new UMath.Vec2(w, h);
 
@@ -52,8 +53,7 @@ export class WorldMap {
         this.hasBoundary = hasBoundary;
         this.showBounds = showBounds;
 
-        let isDirty = true;
-        if (typeof document === "undefined") {
+        if (typeof document === "undefined" || !createInternalBuffer) {
             this.internalFrameBuffer = null;
         } else {
             this.internalFrameBuffer = new wCanvas({
@@ -61,58 +61,63 @@ export class WorldMap {
                 "onResize": (canvas) => {
                     canvas.canvas.width = window.innerWidth + 1;
                     canvas.canvas.height = window.innerHeight + 1;
-                    isDirty = true;
+                    canvas.isDirty = true;
                 }
             });
         }
 
         this.changedCells = [];
-
-        const drawWholeMap = (canvas, scale = 16) => {
-            const offset = this.hasBoundary && this.showBounds ? 1 : 0;
-            for (let x = 0 - offset; x < this.size.x + offset; x++) {
-                for (let y = 0 - offset; y < this.size.y + offset; y++) {
-                    const cell = this.getCell(x, y);
-                    if (cell !== CELL_TYPES.EMPTY) {
-                        drawNodePair(canvas, [{ x, y }, cell], this.pos.x, this.pos.y, scale);
+    }
+        
+    /**
+    * Draws the world to the specified canvas with the specified scale
+    * @param {wCanvas} canvas - The canvas to draw the world on
+    * @param {Number} scale - The Scale of each world's cell
+    */
+    draw(canvas, scale = 16) {
+        const drawMap = (canvas, scale = 16) => {
+            if (this.hasBoundary) {
+                const offset = this.showBounds ? 1 : 0;
+                for (let x = 0 - offset; x < this.size.x + offset; x++) {
+                    for (let y = 0 - offset; y < this.size.y + offset; y++) {
+                        const cell = this.getCell(x, y);
+                        if (cell !== CELL_TYPES.EMPTY) {
+                            drawNodePair(canvas, [{ x, y }, cell], this.pos.x, this.pos.y, scale);
+                        }
                     }
                 }
+            } else {
+                this.mapToNodePairArray(true).forEach(
+                    nodePair => drawNodePair(canvas, nodePair, this.pos.x, this.pos.y, scale)
+                );
             }
         }
         
-        /**
-        * Draws the world to the specified canvas with the specified scale
-        * @param {wCanvas} canvas - The canvas to draw the world on
-        * @param {Number} scale - The Scale of each world's cell
-        */
-        this.draw = (canvas, scale = 16) => {
-            if (this.internalFrameBuffer === null) {
-                drawWholeMap(canvas, scale);
+        if (this.internalFrameBuffer === null) {
+            drawMap(canvas, scale);
+        } else {
+            if (this.internalFrameBuffer.isDirty) {
+                drawMap(this.internalFrameBuffer, scale);
+                this.internalFrameBuffer.isDirty = false;
             } else {
-                if (isDirty) {
-                    drawWholeMap(this.internalFrameBuffer, scale);
-                    isDirty = false;
-                } else {
-                    for (let i = 0; i < this.changedCells.length; i += 3) {
-                        drawNodePair(this.internalFrameBuffer, [{ x: this.changedCells[i + 1], y: this.changedCells[i + 2] }, this.changedCells[i]], this.pos.x, this.pos.y, scale);
-                    }
+                for (let i = 0; i < this.changedCells.length; i += 3) {
+                    drawNodePair(this.internalFrameBuffer, [{ x: this.changedCells[i + 1], y: this.changedCells[i + 2] }, this.changedCells[i]], this.pos.x, this.pos.y, scale);
                 }
-    
-                canvas.context.drawImage(this.internalFrameBuffer.canvas, 0, 0);
-                this.changedCells = [];
             }
-    
-        }
 
-        /**
-         * Clears the map
-         */
-        this.clearMap = () => {
-            this.map = new Map();
-            if (this.internalFrameBuffer !== null) {
-                this.internalFrameBuffer.clear();
-                isDirty = true;
-            }
+            canvas.context.drawImage(this.internalFrameBuffer.canvas, 0, 0);
+            this.changedCells = [];
+        }
+    }
+
+    /**
+     * Clears the map
+     */
+    clearMap() {
+        this.map = new Map();
+        if (this.internalFrameBuffer !== null) {
+            this.internalFrameBuffer.clear();
+            this.internalFrameBuffer.isDirty = true;
         }
     }
 
@@ -258,5 +263,54 @@ export class WorldMap {
 
         return neighbours;
     }
+}
 
+export class WorkerWorldMap extends WorldMap {
+    /**
+     * @param {WindowOrWorkerGlobalScope} workerGlobal - The global scope of the worker (self)
+     * @param {Number} w - The width of the map
+     * @param {Number} h - The height of the map
+     * @param {Boolean} hasBoundary - Whether or not it has boundaries
+     * @param {Boolean} alwaysUpdate - Whether or not it should always send update events
+     * @param {Number} maxCellQueue - The max ammount of cells that can be queued
+     */
+    constructor(workerGlobal, w, h, hasBoundary = true, alwaysUpdate = false, maxCellQueue = 0) {
+        super(0, 0, w, h, hasBoundary, false, false);
+        this.workerGlobal = workerGlobal;
+        this.cellQueue = [ ];
+        this.alwaysUpdate = alwaysUpdate;
+        this.maxCellQueue = maxCellQueue;
+    }
+
+    draw() { }
+
+    clearMap() {
+        super.clearMap();
+        this.workerGlobal.postMessage([ "map_reset" ]);
+    }
+
+    /**
+     * Sends current cell queue
+     */
+    sendCellQueue() {
+        const msg = [ "map_add_cells" ];
+        msg.push(...this.cellQueue);
+        this.workerGlobal.postMessage(msg);
+        this.cellQueue = [ ];
+    }
+
+    putCell(cellType, x, y) {
+        const addedCell = super.putCell(cellType, x, y);
+
+        if (this.alwaysUpdate) {
+            this.workerGlobal.postMessage([ "map_add_cells", cellType, x, y ]);
+        } else {
+            this.cellQueue.push(cellType, x, y);
+            if (this.cellQueue.length >= this.maxCellQueue) {
+                this.sendCellQueue();
+            }
+        }
+
+        return addedCell;
+    }
 }

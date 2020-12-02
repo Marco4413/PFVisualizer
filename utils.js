@@ -2,6 +2,10 @@
 import * as WorldMap from "./WorldMap.js";
 
 /**
+ * @typedef {"map_add_cells"|"map_reset"|"lock_gen"|"unlock_gen"} WorkerMessages
+ */
+
+/**
  * Capitalizes the specified string
  * @param {String} str - The string to capitalize
  * @returns {String} The capitalized string

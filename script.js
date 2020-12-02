@@ -3,7 +3,7 @@ import { wCanvas } from "./wCanvas/wcanvas.js";
 import { capitalize } from "./utils.js";
 import * as WorldMap from "./WorldMap.js";
 import { availableAlgorithms } from "./algorithms/allAlgorithms.js";
-
+import * as utils from "./utils.js";
 
 // SETTINGS
 const KEY_BINDINGS = {
@@ -23,7 +23,7 @@ const BACKGROUND_COLOR = "#000";
 const TEXT_OUTLINE = "#000";
 const TEXT_COLOR = "#fff"
 
-const MAX_CELL_QUEUE = 10;
+const MAX_CELL_QUEUE = 50; // Higher = More Performance (but less visual appeal, 50 should be enough)
 // END SETTINGS
 
 let actionDelay = 25;
@@ -31,7 +31,7 @@ let gridEnabled = true;
 let restartMessage = true;
 
 /** @type {WorldMap.WorldMap} */
-const WORLD_MAP = new WorldMap.WorldMap(0, 0, 30, 15, true, true);
+const WORLD_MAP = new WorldMap.WorldMap(0, 0, 30, 15, true, true, true);
 
 let SCALE = 64;
 let currentAlgorithm = availableAlgorithms[0];
@@ -132,7 +132,7 @@ const pathGenerator = new Worker("./pathGen.js", { "type": "module" });
 pathGenerator.addEventListener("message", ev => {
     // The first element of data is the type of the message
     // The other ones can be either Strings or Numbers
-    /** @type {[ String, Number|String ]} */
+    /** @type {[ utils.WorkerMessages, Number|String ]} */
     const [ messageType, ...args ] = ev.data;
     switch (messageType) {
         case "map_add_cells": {
@@ -145,12 +145,12 @@ pathGenerator.addEventListener("message", ev => {
             WORLD_MAP.clearMap();
             break;
         }
-        case "state_change": {
-            if (args[0] === "start") {
-                isPathGenLocked = true;
-            } else if (args[0] === "stop") {
-                isPathGenLocked = false;
-            }
+        case "lock_gen": {
+            isPathGenLocked = true;
+            break;
+        }
+        case "unlock_gen": {
+            isPathGenLocked = false;
             break;
         }
     }
@@ -162,13 +162,14 @@ pathGenerator.addEventListener("message", ev => {
 function generatePath() {
     if (isPathGenLocked) { return; }
     /*
-    The message must be an array that contains [
-        Maximum Cell Queue Length, The Index of the Currently Selected Algorithm,
-        The Delay Between Actions, The Width of the World, The Height of the World,
-        Whether or not the World has Boundaries
-    ]
+        The message must be an array that contains [
+            The Width of the World, The Height of the World,
+            Whether or not the World has Boundaries,
+            The Delay Between Actions, Maximum Cell Queue Length,
+            The Index of the Currently Selected Algorithm
+        ]
     */
-    pathGenerator.postMessage([ MAX_CELL_QUEUE, currentAlgorithm, actionDelay, WORLD_MAP.size.x, WORLD_MAP.size.y, WORLD_MAP.hasBoundary]);
+    pathGenerator.postMessage([ WORLD_MAP.size.x, WORLD_MAP.size.y, WORLD_MAP.hasBoundary, actionDelay, MAX_CELL_QUEUE, currentAlgorithm ]);
 }
 
 /**

@@ -6,7 +6,7 @@ import { availableAlgorithms } from "./algorithms/allAlgorithms.js";
 let lockPathGen = false;
 /**
  * Generates a starting point, an end point, a WorldMap with random walls and calculates the path from start to end
- * @param {WorldMap.WorldMap} worldMap - The world map to get cell data from
+ * @param {WorldMap.WorkerWorldMap} worldMap - The world map to get cell data from
  * @param {availableAlgorithms[0]} algorithm - The algorithm to use
  * @param {Number} actionDelay - The delay between each algorithm's move
  * @returns {Array<UMath.Vec2>} The path to the goal
@@ -14,10 +14,10 @@ let lockPathGen = false;
 async function generatePath(worldMap, algorithm, actionDelay = 0) {
     if (lockPathGen) { return null; }
     lockPathGen = true;
-    self.postMessage([ "state_change", "start" ]);
+    self.postMessage([ "lock_gen" ]);
 
     worldMap.clearMap();
-
+    
     const start = worldMap.pickRandomPos();
     const goal = worldMap.pickRandomPos();
 
@@ -38,42 +38,14 @@ async function generatePath(worldMap, algorithm, actionDelay = 0) {
     worldMap.sendCellQueue();
 
     lockPathGen = false;
-    self.postMessage([ "state_change", "stop" ]);
+    self.postMessage([ "unlock_gen" ]);
     return path;
 }
 
 self.addEventListener("message", ev => {
     /** @type {[ Number, Number, Number, Number, Number, Boolean ]} */
-    const [ maxCellQueue, algoIndex, actionTime, width, height, hasBounds ] = ev.data;
-    const worldMap = new WorldMap.WorldMap(0, 0, width, height, hasBounds);
-
-    const nativePutCell = worldMap.putCell.bind(worldMap);
-    const nativeClearMap = worldMap.clearMap.bind(worldMap);
-
-    worldMap.cellQueue = [];
-    worldMap.sendCellQueue = () => {
-        const msg = [ "map_add_cells" ];
-        msg.push(...worldMap.cellQueue);
-        self.postMessage(msg);
-        worldMap.cellQueue = [];
-    }
-
-    worldMap.putCell = (cellType, x, y) => {
-        nativePutCell(cellType, x, y);
-
-        if (actionTime > 0) {
-            self.postMessage([ "map_add_cells", cellType, x, y ]);
-        } else {
-            worldMap.cellQueue.push(cellType, x, y);
-            if (worldMap.cellQueue.length >= maxCellQueue) {
-                worldMap.sendCellQueue();
-            }
-        }
-    }
-    worldMap.clearMap = () => {
-        nativeClearMap();
-        self.postMessage([ "map_reset" ]);
-    };
+    const [ width, height, hasBounds, actionTime, maxCellQueue, algoIndex ] = ev.data;
+    const worldMap = new WorldMap.WorkerWorldMap(self, width, height, hasBounds, actionTime > 0, maxCellQueue);
 
     generatePath(worldMap, availableAlgorithms[algoIndex], actionTime);
 });
