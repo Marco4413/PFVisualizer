@@ -1,9 +1,9 @@
 
-import { wCanvas, UMath } from "./wCanvas/wcanvas.js";
+import { wCanvas } from "./wCanvas/wcanvas.js";
 import { capitalize } from "./utils.js";
 import * as WorldMap from "./WorldMap.js";
 import { availableAlgorithms } from "./algorithms/allAlgorithms.js";
-
+import * as utils from "./utils.js";
 
 // SETTINGS
 const KEY_BINDINGS = {
@@ -22,6 +22,8 @@ const GRID_COLOR = "#444";
 const BACKGROUND_COLOR = "#000";
 const TEXT_OUTLINE = "#000";
 const TEXT_COLOR = "#fff"
+
+const MAX_CELL_QUEUE = 50; // Higher = More Performance (but less visual appeal, 50 should be enough)
 // END SETTINGS
 
 let actionDelay = 25;
@@ -29,43 +31,13 @@ let gridEnabled = true;
 let restartMessage = true;
 
 /** @type {WorldMap.WorldMap} */
-const WORLD_MAP = new WorldMap.WorldMap(0, 0, 30, 15, true, true);
+const WORLD_MAP = new WorldMap.WorldMap(0, 0, 30, 15, true, true, true);
 
 let SCALE = 64;
 let currentAlgorithm = availableAlgorithms[0];
 
-// Used to lock path gen when one is already being generated
-let lockPathGen = false;
-/**
- * Generates a starting point, an end point, a WorldMap with random walls and calculates the path from start to end
- * @returns {Array<UMath.Vec2>} The path to the goal
- */
-async function generatePath() {
-    if (lockPathGen) { return null; }
-    lockPathGen = true;
-
-    WORLD_MAP.clearMap();
-
-    const start = WORLD_MAP.pickRandomPos();
-    const goal = WORLD_MAP.pickRandomPos();
-
-    for (let i = 0; i < WORLD_MAP.size.x * WORLD_MAP.size.y / 3; i++) {
-        const pos = WORLD_MAP.pickRandomPos();
-        if (start.x === pos.x && start.y === pos.y || goal.x === pos.x && goal.y === pos.y) {
-            continue;
-        }
-
-        WORLD_MAP.putCell(WorldMap.CELL_TYPES.WALL, pos.x, pos.y);
-    }
-
-    const path = await currentAlgorithm.search(
-        start, goal,
-        WORLD_MAP, actionDelay
-    );
-
-    lockPathGen = false;
-    return path;
-}
+/** Whether or not the path gen worker is currently generating/calculating a path */
+let isPathGenLocked = false;
 
 /**
  * Draws a grid on the specified pos with the specified size
@@ -117,7 +89,7 @@ function draw(canvas, deltaTime) {
         );
     }
 
-    if (!lockPathGen && restartMessage) {
+    if (!isPathGenLocked && restartMessage) {
         const textSize = Math.min(canvas.canvas.width, canvas.canvas.height) / 15;
         canvas.strokeCSS(TEXT_OUTLINE);
         canvas.strokeWeigth(textSize / 55);
@@ -149,11 +121,55 @@ window.changeAlgorithm = (element) => {
     for (let i = 0; i < availableAlgorithms.length; i++) {
         if (availableAlgorithms[i].longName === element.value) {
             console.log(`Chosen Algorithm was found at index ${i}`);
-            currentAlgorithm = availableAlgorithms[i];
+            currentAlgorithm = i;
             return;
         }
     }
     console.log(`No Algorithm was found for ${element.value}`);
+}
+
+const pathGenerator = new Worker("./pathGen.js", { "type": "module" });
+pathGenerator.addEventListener("message", ev => {
+    // The first element of data is the type of the message
+    // The other ones can be either Strings or Numbers
+    /** @type {[ utils.WorkerMessages, Number|String ]} */
+    const [ messageType, ...args ] = ev.data;
+    switch (messageType) {
+        case "map_add_cells": {
+            for (let i = 0; i < args.length; i += 3) {
+                WORLD_MAP.putCell(args[i], args[i + 1], args[i + 2]);
+            }
+            break;
+        }
+        case "map_reset": {
+            WORLD_MAP.clearMap();
+            break;
+        }
+        case "lock_gen": {
+            isPathGenLocked = true;
+            break;
+        }
+        case "unlock_gen": {
+            isPathGenLocked = false;
+            break;
+        }
+    }
+});
+
+/**
+ * Asks path gen worker to generate and calculate a new path if possible
+ */
+function generatePath() {
+    if (isPathGenLocked) { return; }
+    /*
+        The message must be an array that contains [
+            The Width of the World, The Height of the World,
+            Whether or not the World has Boundaries,
+            The Delay Between Actions, Maximum Cell Queue Length,
+            The Index of the Currently Selected Algorithm
+        ]
+    */
+    pathGenerator.postMessage([ WORLD_MAP.size.x, WORLD_MAP.size.y, WORLD_MAP.hasBoundary, actionDelay, MAX_CELL_QUEUE, currentAlgorithm ]);
 }
 
 /**
@@ -163,7 +179,7 @@ window.changeAlgorithm = (element) => {
  */
 window.changeWorldSize = (element, axis) => {
     const newValue = parseInt(element.value);
-    if (lockPathGen || Number.isNaN(newValue) || newValue < MIN_WORLD_SIZE || newValue > MAX_WORLD_SIZE) {
+    if (isPathGenLocked || Number.isNaN(newValue) || newValue < MIN_WORLD_SIZE || newValue > MAX_WORLD_SIZE) {
         element.value = "";
     } else {
         WORLD_MAP.clearMap();
@@ -184,7 +200,7 @@ window.changeWorldSize = (element, axis) => {
         if (placeholder === undefined) { placeholder = element.placeholder; }
 
         const newDelay = parseFloat(element.value);
-        if (lockPathGen || Number.isNaN(newDelay) || newDelay > MAX_ACTION_TIME) {
+        if (isPathGenLocked || Number.isNaN(newDelay) || newDelay > MAX_ACTION_TIME) {
             element.value = "";
         } else if (newDelay <= 0) {
             element.value = "";
