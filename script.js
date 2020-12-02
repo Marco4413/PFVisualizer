@@ -35,6 +35,8 @@ const WORLD_MAP = new WorldMap.WorldMap(0, 0, 30, 15, true, true);
 
 let SCALE = 64;
 let currentAlgorithm = availableAlgorithms[0];
+
+/** Whether or not the path gen worker is currently generating/calculating a path */
 let isPathGenLocked = false;
 
 /**
@@ -126,8 +128,11 @@ window.changeAlgorithm = (element) => {
     console.log(`No Algorithm was found for ${element.value}`);
 }
 
-const pathGenerator = new Worker("./genPath.js", { "type": "module" });
+const pathGenerator = new Worker("./pathGen.js", { "type": "module" });
 pathGenerator.addEventListener("message", ev => {
+    // The first element of data is the type of the message
+    // The other ones can be either Strings or Numbers
+    /** @type {[ String, Number|String ]} */
     const [ messageType, ...args ] = ev.data;
     switch (messageType) {
         case "map_add_cells": {
@@ -151,8 +156,18 @@ pathGenerator.addEventListener("message", ev => {
     }
 });
 
+/**
+ * Asks path gen worker to generate and calculate a new path if possible
+ */
 function generatePath() {
     if (isPathGenLocked) { return; }
+    /*
+    The message must be an array that contains [
+        Maximum Cell Queue Length, The Index of the Currently Selected Algorithm,
+        The Delay Between Actions, The Width of the World, The Height of the World,
+        Whether or not the World has Boundaries
+    ]
+    */
     pathGenerator.postMessage([ MAX_CELL_QUEUE, currentAlgorithm, actionDelay, WORLD_MAP.size.x, WORLD_MAP.size.y, WORLD_MAP.hasBoundary]);
 }
 

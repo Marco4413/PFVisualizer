@@ -43,36 +43,37 @@ async function generatePath(worldMap, algorithm, actionDelay = 0) {
 }
 
 self.addEventListener("message", ev => {
+    /** @type {[ Number, Number, Number, Number, Number, Boolean ]} */
     const [ maxCellQueue, algoIndex, actionTime, width, height, hasBounds ] = ev.data;
-    const wm = new WorldMap.WorldMap(0, 0, width, height, hasBounds);
+    const worldMap = new WorldMap.WorldMap(0, 0, width, height, hasBounds);
 
-    const nativePutCell = wm.putCell.bind(wm);
-    const nativeClearMap = wm.clearMap.bind(wm);
+    const nativePutCell = worldMap.putCell.bind(worldMap);
+    const nativeClearMap = worldMap.clearMap.bind(worldMap);
 
-    wm.cellQueue = [];
-    wm.sendCellQueue = () => {
+    worldMap.cellQueue = [];
+    worldMap.sendCellQueue = () => {
         const msg = [ "map_add_cells" ];
-        msg.push(...wm.cellQueue);
+        msg.push(...worldMap.cellQueue);
         self.postMessage(msg);
-        wm.cellQueue = [];
+        worldMap.cellQueue = [];
     }
 
-    wm.putCell = (cellType, x, y) => {
+    worldMap.putCell = (cellType, x, y) => {
         nativePutCell(cellType, x, y);
 
         if (actionTime > 0) {
             self.postMessage([ "map_add_cells", cellType, x, y ]);
         } else {
-            wm.cellQueue.push(cellType, x, y);
-            if (wm.cellQueue.length >= maxCellQueue) {
-                wm.sendCellQueue();
+            worldMap.cellQueue.push(cellType, x, y);
+            if (worldMap.cellQueue.length >= maxCellQueue) {
+                worldMap.sendCellQueue();
             }
         }
     }
-    wm.clearMap = () => {
+    worldMap.clearMap = () => {
         nativeClearMap();
         self.postMessage([ "map_reset" ]);
     };
 
-    generatePath(wm, availableAlgorithms[algoIndex], actionTime);
+    generatePath(worldMap, availableAlgorithms[algoIndex], actionTime);
 });
