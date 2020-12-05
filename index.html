@@ -74,6 +74,14 @@
         input.settingsItem:focus::placeholder {
             color: transparent;
         }
+
+        .repoRef, .repoRef:visited {
+            position: absolute;
+            bottom: 0px;
+            left: 0px;
+            color: white;
+            margin: 5px;
+        }
     </style>
 </head>
 <body>
@@ -84,5 +92,6 @@
         <input type="text" placeholder="Move Time (ms)" class="settingsItem" onchange="changeActionDelay(this, 'No Delay!')">
     </div>
     <div id="infoPanel" class="panel"></div>
+    <a class="repoRef" href="https://github.com/hds536jhmk/PFVisualizer">Copyright (c) 2020 hds536jhmk</a>
 </body>
 </html>
