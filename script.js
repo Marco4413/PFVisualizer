@@ -1,5 +1,5 @@
 
-import { wCanvas } from "./wCanvas/wcanvas.js";
+import { wCanvas, Color } from "./wCanvas/wcanvas.js";
 import { capitalize } from "./utils.js";
 import * as WorldMap from "./WorldMap.js";
 import { availableAlgorithms } from "./algorithms/allAlgorithms.js";
@@ -18,10 +18,10 @@ const MIN_WORLD_SIZE = 8;
 const MAX_WORLD_SIZE = 400;
 const MAX_ACTION_TIME = 100;
 
-const GRID_COLOR = "#444";
-const BACKGROUND_COLOR = "#000";
-const TEXT_OUTLINE = "#000";
-const TEXT_COLOR = "#fff"
+const GRID_COLOR = new Color("#444");
+const BACKGROUND_COLOR = new Color("#000");
+const TEXT_OUTLINE = new Color("#000");
+const TEXT_COLOR = new Color("#fff");
 
 const MAX_CELL_QUEUE = 50; // Higher = More Performance (but less visual appeal, 50 should be enough)
 // END SETTINGS
@@ -49,7 +49,7 @@ let isPathGenLocked = false;
  * @param {Number} cellSize - The spacing between each column and row
  */
 function drawGrid(canvas, x, y, cols, rows, cellSize) {
-    canvas.strokeCSS(GRID_COLOR);
+    canvas.stroke(GRID_COLOR);
     canvas.strokeWeigth(1);
 
     if (cellSize < 1) { return; }
@@ -74,7 +74,7 @@ function drawGrid(canvas, x, y, cols, rows, cellSize) {
  * @param {Number} deltaTime
  */
 function draw(canvas, deltaTime) {
-    canvas.backgroundCSS(BACKGROUND_COLOR);
+    canvas.background(BACKGROUND_COLOR);
 
     if (WORLD_MAP) {
         WORLD_MAP.draw(canvas, SCALE);
@@ -91,9 +91,9 @@ function draw(canvas, deltaTime) {
 
     if (!isPathGenLocked && restartMessage) {
         const textSize = Math.min(canvas.canvas.width, canvas.canvas.height) / 15;
-        canvas.strokeCSS(TEXT_OUTLINE);
+        canvas.stroke(TEXT_OUTLINE);
         canvas.strokeWeigth(textSize / 55);
-        canvas.fillCSS(TEXT_COLOR);
+        canvas.fill(TEXT_COLOR);
         canvas.textSize(textSize);
         canvas.text(
             `Press ${KEY_BINDINGS.restart} to generate a new path`, canvas.canvas.width / 2, canvas.canvas.height / 2,

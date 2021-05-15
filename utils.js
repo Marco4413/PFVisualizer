@@ -1,4 +1,5 @@
 
+import { Color } from "./wCanvas/wcanvas.js";
 import * as WorldMap from "./WorldMap.js";
 
 /**
@@ -30,7 +31,7 @@ export function sleep(ms) {
  * @param {Number} y - Y pos offset
  */
 export function drawNodePair(canvas, nodePair, x = 0, y = 0, cellSize = 16) {
-    canvas.fillCSS(nodePair[1]);
+    canvas.fill(new Color(nodePair[1]));
     canvas.rect(
         x + nodePair[0].x * cellSize, y + nodePair[0].y * cellSize, cellSize, cellSize,
         { "noStroke": true }
