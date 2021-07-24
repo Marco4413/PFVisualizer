@@ -53,7 +53,7 @@ export class WorldMap {
         this.hasBoundary = hasBoundary;
         this.showBounds = showBounds;
 
-        if (typeof document === "undefined" || !createInternalBuffer) {
+        if (document === undefined || !createInternalBuffer) {
             this.internalFrameBuffer = null;
         } else {
             this.internalFrameBuffer = new wCanvas({
