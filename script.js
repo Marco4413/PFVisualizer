@@ -97,7 +97,7 @@ function draw(canvas, deltaTime) {
         canvas.textSize(textSize);
         canvas.text(
             `Press ${KEY_BINDINGS.restart} to generate a new path`, canvas.canvas.width / 2, canvas.canvas.height / 2,
-            { "horizontalAlignment": "center", "verticalAlignment": "center", "noStroke": false }
+            { "alignment": { "horizontal": "center", "vertical": "center" }, "noStroke": false }
         );
     }
 }
