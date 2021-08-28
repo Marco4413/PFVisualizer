@@ -53,14 +53,15 @@ export class WorldMap {
         this.hasBoundary = hasBoundary;
         this.showBounds = showBounds;
 
-        if (document === undefined || !createInternalBuffer) {
+        // Why is this needed, I don't get it. Not gonna question this anymore since it works
+        if (typeof(document) === "undefined" || !createInternalBuffer) {
             this.internalFrameBuffer = null;
         } else {
             this.internalFrameBuffer = new wCanvas({
                 "canvas": document.createElement("canvas"),
                 "onResize": (canvas) => {
-                    canvas.canvas.width = window.innerWidth + 1;
-                    canvas.canvas.height = window.innerHeight + 1;
+                    canvas.element.width = window.innerWidth + 1;
+                    canvas.element.height = window.innerHeight + 1;
                     canvas.isDirty = true;
                 }
             });
@@ -105,7 +106,7 @@ export class WorldMap {
                 }
             }
 
-            canvas.context.drawImage(this.internalFrameBuffer.canvas, 0, 0);
+            canvas.context.drawImage(this.internalFrameBuffer.element, 0, 0);
             this.changedCells = [];
         }
     }

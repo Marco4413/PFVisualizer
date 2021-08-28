@@ -50,20 +50,20 @@ let isPathGenLocked = false;
  */
 function drawGrid(canvas, x, y, cols, rows, cellSize) {
     canvas.stroke(GRID_COLOR);
-    canvas.strokeWeigth(1);
+    canvas.strokeWeight(1);
 
     if (cellSize < 1) { return; }
     for (let col = 0; col <= cols; col++) {
         canvas.line(
             x + col * cellSize, 0,
-            x + col * cellSize, canvas.canvas.height
+            x + col * cellSize, canvas.element.height
         );
     }
 
     for (let row = 0; row <= rows; row++) {
         canvas.line(
             0, y + row * cellSize,
-            canvas.canvas.width, y + row * cellSize
+            canvas.element.width, y + row * cellSize
         );
     }
 
@@ -84,19 +84,19 @@ function draw(canvas, deltaTime) {
         drawGrid(
             canvas,
             WORLD_MAP.pos.x % SCALE, WORLD_MAP.pos.y % SCALE,
-            Math.floor(canvas.canvas.width / SCALE), Math.floor(canvas.canvas.height / SCALE),
+            Math.floor(canvas.element.width / SCALE), Math.floor(canvas.element.height / SCALE),
             SCALE
         );
     }
 
     if (!isPathGenLocked && restartMessage) {
-        const textSize = Math.min(canvas.canvas.width, canvas.canvas.height) / 15;
+        const textSize = Math.min(canvas.element.width, canvas.element.height) / 15;
         canvas.stroke(TEXT_OUTLINE);
-        canvas.strokeWeigth(textSize / 55);
+        canvas.strokeWeight(textSize / 55);
         canvas.fill(TEXT_COLOR);
         canvas.textSize(textSize);
         canvas.text(
-            `Press ${KEY_BINDINGS.restart} to generate a new path`, canvas.canvas.width / 2, canvas.canvas.height / 2,
+            `Press ${KEY_BINDINGS.restart} to generate a new path`, canvas.element.width / 2, canvas.element.height / 2,
             { "alignment": { "horizontal": "center", "vertical": "center" }, "noStroke": false }
         );
     }
@@ -274,8 +274,8 @@ window.addEventListener("load", () => {
     new wCanvas({
         "onDraw": draw,
         "onResize": (canvas) => {
-            canvas.canvas.width = window.innerWidth + 1;
-            canvas.canvas.height = window.innerHeight + 1;
+            canvas.element.width = window.innerWidth + 1;
+            canvas.element.height = window.innerHeight + 1;
 
             recalcScale();
         }
